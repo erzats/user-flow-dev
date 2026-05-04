@@ -8,6 +8,7 @@ Canonical structure for a single flow's detail section. Used by `init` and `add`
 ## UF-<DOMAIN>-NNN — <Title>
 
 Status: active
+Active task: tasks/<domain>/TASK-NNN.md   ← optional; present only while a task is open for this flow
 Surface: <web | mobile | both | admin-only>
 Actor: <role(s) — e.g. "player", "venue admin", "system">
 Tags: <tag>, <tag>, <tag>
@@ -37,6 +38,7 @@ Tags: <tag>, <tag>, <tag>
 ## Field rules
 
 - **Status:** Required, one of: `init`, `not started`, `incomplete`, `issues`, `needs manual validation`, `completed`, `deferred`, `superseded by UF-X-NNN`. `init` is the sentinel for "inferred from code, not yet evaluated by check" and is what the `init` command writes. `add` defaults new flows to `not started`. `check` writes `incomplete` / `issues` / `needs manual validation` / `completed` based on per-AC verdicts. Humans set `deferred` and `superseded` (intent signals `check` cannot infer). `pending` surfaces only `not started` / `incomplete` / `issues` / `needs manual validation`; the others are considered settled. See SKILL.md "Status values" for the full mapping.
+- **Active task:** Optional. Present only while a task file exists for this flow. Added by `task` (manual) or `check` (findings). Removed by `done` or by `check` when the linked task is archived. Format is the relative path from the domain file: `tasks/<domain>/TASK-NNN.md`. The flow detail should never carry a stale `Active task:` line — at most one task per flow, and the line is the canonical pointer to it.
 - **Surface:** `web`, `mobile`, `both`, or `admin-only`. Used by `check` to narrow the search area in code.
 - **Actor:** role of whoever drives the flow. `system` is acceptable for background flows (webhook reconciliation, scheduled jobs).
 - **Tags:** 2–5 short keywords, lowercase and hyphenated. These are the same tags that appear in the `overview.md` index line for this flow — keep them in sync.

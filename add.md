@@ -89,7 +89,7 @@ If the domain file does not exist, create it with the shape from `init.md` Step 
 
 Flow detail follows `flow-template.md` exactly. Do not invent new sections. The template's required sections are:
 
-- Status / Surface / Actor / Tags (front-matter style under the header)
+- Status / Surface / Actor / Tags (front-matter style under the header). Default `Status: not started` for new flows; use `Status: needs manual validation` if the user waived clarification (Step 4).
 - `### User goal`
 - `### Preconditions`
 - `### Main path`

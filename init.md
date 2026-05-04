@@ -200,9 +200,10 @@ Read the project's `CLAUDE.md`. Show the user this snippet and **ask before addi
 This project documents intended product behavior under `.claude/user-flows/`. Treat it as canonical for "how this is supposed to work".
 
 - **Session start:** read `.claude/user-flows/overview.md`. It is short and pipe-delimited; load it always.
-- **Before touching code in a domain:** read `.claude/user-flows/domains/<domain>.md`. The two-sentence summary plus the index tells you which flows you might affect.
+- **Before touching code in a domain:** read `.claude/user-flows/domains/<domain>.md`. The two-sentence summary plus the index tells you which flows you might affect. If a flow you're about to touch carries an `Active task:` line, read that task file too — it has the latest findings or in-flight scope.
 - **Before making a change that would alter behavior:** check the affected flows' acceptance criteria. If a change would break one, surface it to the user before making the change.
 - **Finishing a task:** when you complete implementation work tied to a `TASK-NNN`, call `/user-flow-dev done TASK-NNN` so the task file moves to archive and `todo.md` reflects reality.
+- **After meaningful changes in a domain:** run `/user-flow-dev check <domain>` so flow status and tasks stay reconciled with the code. `check` updates statuses, refreshes the `## Findings` section of the relevant task (or creates one if needed), and archives tasks whose flow now passes.
 - **New behavior:** when adding meaningful new behavior, run `/user-flow-dev add <description>` so the flow gets documented before or alongside the change.
 ```
 

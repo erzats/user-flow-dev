@@ -4,6 +4,8 @@ Mark a task done and archive its file. **Expected to be called automatically by 
 
 **Scope:** writes inside `.claude/user-flows/` only.
 
+> `/user-flow-dev check` also archives tasks autonomously when verification confirms the linked flow is now `completed`. The two paths use the same archival shape; this command is the manual entry point used at task-completion time, while `check` is the verification-time entry point. If `check` has already archived your task, `done` will report it as already archived and stop.
+
 ## When Claude should call this autonomously
 
 If the project's CLAUDE.md mentions user-flow-dev (it should, after `init`), then any time Claude completes implementation work that closes out a `TASK-NNN`, it should run this command without being asked. Specifically:
@@ -51,7 +53,13 @@ Find the line `TASK-NNN | <summary> | <domain> | <FLOW-ID> | <status>` and **rem
 
 (The archive directory is the record of done work; `todo.md` stays focused on what's actually pending. If a project has a different convention, it can override — but the default is removal.)
 
-### Step 5 — Confirm
+### Step 5 — Remove the `Active task:` line from flow detail
+
+Open the linked flow's domain file and locate the `## UF-<DOMAIN>-NNN — ...` section. Remove the `Active task: tasks/<domain>/TASK-NNN.md` line if present, leaving the rest of the flow detail untouched.
+
+This is the same line that `task` and `check` add when they create a task; removing it on archive keeps the flow detail honest about whether work is actively tracked.
+
+### Step 6 — Confirm
 
 Print:
 
@@ -59,7 +67,7 @@ Print:
 TASK-NNN archived.
 - Moved tasks/<domain>/TASK-NNN.md → tasks/archive/TASK-NNN.md
 - Removed from todo.md
-- Linked flow: UF-<DOMAIN>-NNN
+- Removed Active task: line from UF-<DOMAIN>-NNN flow detail
 - AC verification: <list each AC and the file:line that enforces it, OR "ran /user-flow-dev check <domain> — all ACs ✓">
 ```
 

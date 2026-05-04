@@ -116,7 +116,7 @@ Every flow has a `Status:` field. Status reflects the flow's lifecycle position;
 
 - **`init`** writes `Status: init` for every flow it generates. After `init`, `pending` is empty.
 - **`add`** writes `Status: not started` for every new flow (since `add` typically describes new or about-to-build behavior). The flow surfaces in `pending` immediately.
-- **`check`** writes one of `incomplete` / `issues` / `needs manual validation` / `completed` based on the per-flow verdict (see `check.md` "Status mapping"). `check` never overwrites `deferred` or `superseded` — those are intent flags it has no signal for.
+- **`check`** writes one of `incomplete` / `issues` / `needs manual validation` / `completed` based on the per-flow verdict (see `check.md` "Step 4 — Compute per-flow status"). It also reconciles each examined flow's task — creating one if findings exist and none does, refreshing the `## Findings` section of an existing one, or archiving one when the flow flips to `completed`. `check` never overwrites `deferred` or `superseded` — those are intent flags it has no signal for.
 - **Humans** set `deferred` (intentional non-implementation) and `superseded by UF-X-NNN` (replacement relationship). Both encode product/refactoring intent that cannot be derived from code analysis.
 
 ### Verdict precedence in `check`
@@ -129,9 +129,17 @@ When a flow has mixed AC verdicts, `check` picks the highest-priority status tha
 4. All `– not implemented` → `not started`
 5. All `✓ holds` → `completed`
 
+## Tasks and findings
+
+There is at most one open task per flow. Tasks live in `tasks/<domain>/TASK-NNN.md` and use a global TASK-NNN sequence. The header field `**Source:** manual` or `**Source:** check` records who created the task.
+
+When a task exists for a flow, the flow's detail section in the domain file carries an `Active task: tasks/<domain>/TASK-NNN.md` line directly under `Status:`. This is added by `task` or `check` when the task is created and removed by `done` or `check` when the task is archived — keeping each flow's detail honest about whether work is actively tracked.
+
+Inside any task, the `## Findings` section is owned by `check`. It is added on the first check run that surfaces issues for the linked flow and refreshed on every subsequent run. Every other section in the task — `## Scope`, `## Notes`, custom sections — belongs to the human or the command that created the task; `check` does not touch them.
+
 ## CLAUDE.md integration
 
-After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.
+After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, treat the flow detail's `Active task:` line as the entry point to in-flight work for that flow, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work, run `/user-flow-dev check [domain]` after meaningful changes so status and tasks stay reconciled, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.
 
 ## Anti-patterns — stop yourself if you catch yourself doing these
 
