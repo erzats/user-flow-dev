@@ -1,8 +1,8 @@
 # `/user-flow-dev check [domain]`
 
-Verify documented acceptance criteria still hold against the current code. Flag regressions.
+Verify documented acceptance criteria still hold against the current code. Flag regressions. Write each examined flow's `Status:` field based on the per-flow verdict.
 
-**Read-only.** No file modifications, no auto-task creation.
+**Status-write only.** `check` updates the `Status:` line of each examined flow and nothing else. It never modifies AC text, branches, dependencies, or any other field. It never creates tasks.
 
 ## STOP — no vibes-based verification
 
@@ -17,7 +17,7 @@ The cost of a false positive (claiming a broken flow works) is much higher than 
 - `check` (no arg) — checks every active flow across all domains. Slow. Use before a release. Warn the user about runtime up front.
 - `check <domain>` — checks only flows in one domain. Use before merging a feature branch that touched that area.
 
-Skip flows whose status (in their domain file) is `superseded` or `deferred`. Only `active` and `needs review` flows are checked.
+Skip flows whose status is `deferred` or `superseded by ...`. Those encode product/refactoring intent that `check` has no signal for and must not overwrite. Examine all other flows: `init`, `not started`, `incomplete`, `issues`, `needs manual validation`, `completed`. For these statuses, `check` will rewrite the value based on the new verdict.
 
 ## Procedure
 
@@ -95,19 +95,39 @@ Flows checked: 18
 2. UF-NOTIF-005: not implemented; consider running `/user-flow-dev task UF-NOTIF-005` to track.
 ```
 
-### Step 5 — Do not modify files
+### Step 5 — Write status updates
 
-`check` is read-only.
+For each examined flow, compute the per-flow verdict and rewrite its `Status:` line in the domain file. Status mapping (highest priority wins):
+
+| Per-flow condition | New status |
+|---|---|
+| Any AC `✗ broken` | `issues` |
+| Any AC `⚠ unclear` (and none broken) | `needs manual validation` |
+| Mix of `✓ holds` and `– not implemented` (no broken, no unclear) | `incomplete` |
+| All ACs `– not implemented` | `not started` |
+| All ACs `✓ holds` | `completed` |
+
+Edit only the `Status:` line. Do not touch anything else in the flow's detail section.
+
+If the new status equals the existing status, you may still rewrite (idempotent) or skip — both are fine.
+
+If the flow had `Status: deferred` or `Status: superseded by ...`, you should not be in this step at all (those flows are skipped at Step 1).
+
+### Step 6 — Do not modify anything else
+
+`check` writes the `Status:` field and nothing else.
 
 - Do not auto-create tasks for broken flows. Suggest `/user-flow-dev task <FLOW-ID>` in the action items; let the user run it.
-- Do not edit flow files. ACs only change via deliberate edits, not as a side effect of check.
+- Do not edit AC text, branches, preconditions, or any other field. Those change via deliberate edits, not as a side effect of check.
 - Do not stamp a "last checked" timestamp anywhere.
+- Do not flip `deferred` or `superseded` flows to anything else — those are off-limits.
 
 ## Anti-patterns specific to check
 
 - **Vibes-based verification.** Marking ACs `✓ holds` because the code "looks roughly right". If you didn't trace specific code, it's `⚠`. This is the most important rule in this file.
 - Reasoning about ACs against the AC text alone, without searching the codebase. The check is against code, not against itself.
 - Citing a file without a line range or function. A bare filename is not a citation.
-- Modifying flow files to "update" ACs that no longer apply. ACs change deliberately, not as a side effect.
+- Modifying any flow field other than `Status:`. ACs and other content change deliberately, not as a side effect.
+- Touching `deferred` or `superseded` flows.
 - Auto-creating tasks for findings. The user decides which findings become tasks.
 - Treating `check` (no arg) as quick. It is not. Warn up front.

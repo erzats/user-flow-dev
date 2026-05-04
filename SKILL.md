@@ -97,6 +97,38 @@ When in doubt, prefer the hard rule (merge). It is easier to split a fat domain 
 
 `UF-<DOMAIN>-NNN` where `<DOMAIN>` is the uppercased domain name (or short prefix for long names — `PAYMENTS` not `BILLING-AND-SUBSCRIPTIONS`). Numbers start at 001, append-only. Never renumber. If a flow is superseded, mark its detail section `Status: superseded by UF-X-NNN`; do not delete or renumber.
 
+## Status values
+
+Every flow has a `Status:` field. Status reflects the flow's lifecycle position; `pending` and `check` use it to decide what to surface.
+
+| Status | Set by | `pending` surfaces? | `check` examines? | Meaning |
+|---|---|---|---|---|
+| `init` | `init` (default) | No | Yes | Inferred from existing code; not yet evaluated by `check`. The sentinel for "we wrote down what the code seems to do, but haven't verified ACs against it." |
+| `not started` | `add` (default), human | Yes | Yes | Intended behavior; implementation hasn't begun. |
+| `incomplete` | `check` | Yes | Yes | Some ACs verified (`✓ holds`), some have no implementation (`– not implemented`). |
+| `issues` | `check` | Yes | Yes | At least one AC `✗ broken`. Highest-priority status when multiple verdicts apply. |
+| `needs manual validation` | `check` | Yes | Yes | At least one AC `⚠ unclear` (and none broken). The flow needs a human to confirm. |
+| `completed` | `check` | No | Yes | All ACs `✓ holds`. The flow is verified working as of the last `check`. |
+| `deferred` | human | No | No | Future behavior, not currently planned. `check` cannot infer this — only humans set it. |
+| `superseded by UF-X-NNN` | human | No | No | Replaced by another flow. Kept for traceability. `check` cannot infer this — only humans set it. |
+
+### Who writes what
+
+- **`init`** writes `Status: init` for every flow it generates. After `init`, `pending` is empty.
+- **`add`** writes `Status: not started` for every new flow (since `add` typically describes new or about-to-build behavior). The flow surfaces in `pending` immediately.
+- **`check`** writes one of `incomplete` / `issues` / `needs manual validation` / `completed` based on the per-flow verdict (see `check.md` "Status mapping"). `check` never overwrites `deferred` or `superseded` — those are intent flags it has no signal for.
+- **Humans** set `deferred` (intentional non-implementation) and `superseded by UF-X-NNN` (replacement relationship). Both encode product/refactoring intent that cannot be derived from code analysis.
+
+### Verdict precedence in `check`
+
+When a flow has mixed AC verdicts, `check` picks the highest-priority status that applies:
+
+1. Any `✗ broken` → `issues`
+2. Any `⚠ unclear` (and none broken) → `needs manual validation`
+3. Mix of `✓ holds` and `– not implemented` → `incomplete`
+4. All `– not implemented` → `not started`
+5. All `✓ holds` → `completed`
+
 ## CLAUDE.md integration
 
 After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.

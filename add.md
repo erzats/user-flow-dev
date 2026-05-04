@@ -57,7 +57,7 @@ Format the questions as a short numbered list. Reference the user's words where 
 
 Do not proceed until the user answers (or explicitly waives) the items.
 
-If the user pushes back ("just write it, I'll fix it later"), respond once with: "I'll write a draft, but flows that get written hastily get re-written. Two minutes of clarification saves an audit later. Anything you'd skip from this list?" and then comply if they still insist. Mark waived items as `Status: needs review` in the flow detail.
+If the user pushes back ("just write it, I'll fix it later"), respond once with: "I'll write a draft, but flows that get written hastily get re-written. Two minutes of clarification saves an audit later. Anything you'd skip from this list?" and then comply if they still insist. When a flow is written with waived clarification, set `Status: needs manual validation` (instead of the default `not started`) so it surfaces in `pending` flagged as needing human follow-up — not as ordinary new work.
 
 ## Step 5 — Assign the ID
 

@@ -1,11 +1,11 @@
 # `/user-flow-dev pending`
 
-List flows that have no associated task. **Discovery only — generates nothing.**
+List flows that need attention based on their `Status:` field. **Discovery only — generates nothing.**
 
 ## What this command does and does not do
 
-- ✅ Reads `overview.md`, `tasks/todo.md`, and `tasks/archive/`
-- ✅ Identifies flows whose IDs do not appear in any task file
+- ✅ Reads `overview.md` and each domain file under `domains/`
+- ✅ Identifies flows whose status is one of `not started`, `incomplete`, `issues`, `needs manual validation`
 - ✅ Prints a grouped, scannable list
 - ❌ Does not create tasks. To create one, the user runs `/user-flow-dev task <FLOW-ID>`.
 - ❌ Does not propose new flows. To add one, the user runs `/user-flow-dev add ...`.
@@ -18,42 +18,54 @@ If you find yourself reaching for Write or Edit, you misunderstood — this is r
 ### Step 1 — Read
 
 - `.claude/user-flows/overview.md` (canonical flow list)
-- `.claude/user-flows/tasks/todo.md` (active tasks)
-- `.claude/user-flows/tasks/archive/*.md` (completed tasks — flows tied to a done task are still "covered")
+- `.claude/user-flows/domains/*.md` (to read each flow's `Status:` field)
 
-If any of these files don't exist, tell the user that user-flows aren't initialized yet and stop. Do not bootstrap.
+If `overview.md` does not exist, tell the user that user-flows aren't initialized yet and stop. Do not bootstrap.
 
 ### Step 2 — Compute the set
 
-A flow is "pending" if its `UF-...` ID does **not** appear in:
-- Any line of `todo.md`, AND
-- Any file in `tasks/archive/`
+A flow is "pending" if its `Status:` is **one of**:
+- `not started`
+- `incomplete`
+- `issues`
+- `needs manual validation`
 
-Treat archived tasks as "covered" — that flow has been worked on; not pending.
+A flow is **not** pending if its status is:
+- `init` — inferred from code, not yet evaluated by `check`. Run `check` if you want a verdict.
+- `completed` — verified working at last `check`.
+- `deferred` — intentionally not built.
+- `superseded by UF-X-NNN` — replaced.
 
-Filter out flows whose status (in their domain file) is `superseded` or `deferred`. They are intentionally not actionable.
+Status is the only signal `pending` cares about. Task association (presence in `todo.md` or `archive/`) is **not** considered — that is the job of `/user-flow-dev task list` (if any), not `pending`.
 
 ### Step 3 — Group and print
 
-Group by domain. Within a domain, sort by ID. Format:
+Group by domain. Within a domain, sort by ID. Annotate each line with the flow's status so the user can prioritize. Format:
 
 ```
-Pending flows (no task):
+Pending flows (need attention):
 
 auth/
-  UF-AUTH-003 | First-time account provisioning | tags: signup, sso
-  UF-AUTH-005 | Session expiry / re-auth | tags: session, refresh
+  UF-AUTH-003 | not started           | First-time account provisioning | tags: signup, sso
+  UF-AUTH-005 | issues                | Session expiry / re-auth | tags: session, refresh
 
 payments/
-  UF-PAYMENTS-004 | Subscription renewal succeeds | tags: stripe, renewal
+  UF-PAYMENTS-004 | needs manual validation | Subscription renewal succeeds | tags: stripe, renewal
 
-(3 of 24 flows have no associated task)
+(3 of 24 flows need attention; 18 completed, 2 init, 1 deferred)
 ```
 
-If every flow has a task, print:
+If no flows are pending, print:
 
 ```
-No pending flows. All 24 documented flows have at least one task (active or archived).
+No pending flows. All 24 flows are either `completed`, `init`, `deferred`, or `superseded`.
+```
+
+If everything is still `init` (no `check` has run yet), say so explicitly so the user understands `pending` will stay empty until they run `check`:
+
+```
+No pending flows — all 24 flows are still in `init` status (inferred from code, not yet evaluated).
+Run `/user-flow-dev check` to evaluate ACs against current code; flows that fail will surface here.
 ```
 
 If a domain has no pending flows, omit it entirely — don't print empty headers.
@@ -71,5 +83,6 @@ Skip the section if it would be empty.
 
 - Suggesting which flows the user should create tasks for. The list itself is the suggestion.
 - Auto-generating tasks for the user. They use `task` for that.
-- Including superseded/deferred flows in the main pending list.
-- Re-reading domain files for content that's already in the overview. The overview is the index for a reason — only crack open a domain file if you genuinely need a flow's status.
+- Including `init`, `completed`, `deferred`, or `superseded` flows in the main pending list.
+- Filtering by task association instead of by status. Tasks are orthogonal to pending in the new model.
+- Re-reading domain files for AC content. Read them only to extract the `Status:` line for each flow.

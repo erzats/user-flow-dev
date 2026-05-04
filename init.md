@@ -143,7 +143,7 @@ UF-<DOMAIN>-002 | <Title> | <domain> | tags: ...
 
 ## UF-<DOMAIN>-001 — <Title>
 
-Status: active
+Status: init
 Surface: <web | mobile | both | admin-only>
 Actor: <role(s)>
 Tags: <tag>, <tag>, <tag>
@@ -216,7 +216,8 @@ Print a one-paragraph summary including:
 - Number of domains and total flows created
 - The exact list of file paths written under `.claude/user-flows/`
 - Whether CLAUDE.md was updated, declined, or skipped
-- Suggested next step: `/user-flow-dev pending` to see flows ready for tasks, or `/user-flow-dev check` to verify the just-documented flows against current code
+- Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones
+- Suggested next step: `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
 
 Listing every file path is non-negotiable — the user must be able to see what changed without diffing.
 

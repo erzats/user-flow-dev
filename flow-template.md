@@ -36,7 +36,7 @@ Tags: <tag>, <tag>, <tag>
 
 ## Field rules
 
-- **Status:** `active`, `superseded by UF-X-NNN`, or `deferred`. Default to `active`.
+- **Status:** Required, one of: `init`, `not started`, `incomplete`, `issues`, `needs manual validation`, `completed`, `deferred`, `superseded by UF-X-NNN`. `init` is the sentinel for "inferred from code, not yet evaluated by check" and is what the `init` command writes. `add` defaults new flows to `not started`. `check` writes `incomplete` / `issues` / `needs manual validation` / `completed` based on per-AC verdicts. Humans set `deferred` and `superseded` (intent signals `check` cannot infer). `pending` surfaces only `not started` / `incomplete` / `issues` / `needs manual validation`; the others are considered settled. See SKILL.md "Status values" for the full mapping.
 - **Surface:** `web`, `mobile`, `both`, or `admin-only`. Used by `check` to narrow the search area in code.
 - **Actor:** role of whoever drives the flow. `system` is acceptable for background flows (webhook reconciliation, scheduled jobs).
 - **Tags:** 2–5 short keywords, lowercase and hyphenated. These are the same tags that appear in the `overview.md` index line for this flow — keep them in sync.
