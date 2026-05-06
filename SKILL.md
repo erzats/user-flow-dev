@@ -1,6 +1,6 @@
 ---
 name: user-flow-dev
-description: Use when the user types /user-flow-dev (any subcommand), when the project contains .claude/user-flows/, when work is about to touch a documented flow's domain, when a UF-* flow ID appears in conversation, or when finishing a task tied to a flow. Triggers also include: starting on a feature in a project with documented flows, or when a proposed change risks violating an existing flow's acceptance criteria.
+description: Use when the user types /user-flow-dev (any subcommand), when the project contains .claude/user-flows/, when work is about to touch a documented flow's domain, when a UF-* flow ID appears in conversation, or when finishing a task tied to a flow. Triggers also include: starting on a feature in a project with documented flows; when a proposed change risks violating an existing flow's acceptance criteria; and when the user reports a bug, regression, or "should work like X" expectation that maps to user-visible behavior — propose `/user-flow-dev report` to capture it as a flow change or new flow.
 ---
 
 # user-flow-dev
@@ -23,8 +23,10 @@ The first word of `$ARGUMENTS` selects the subcommand. Read the matching referen
 | `add` | `add.md` | **Conversational.** Add one flow. Never one-shot. |
 | `pending` | `pending.md` | List flows with no associated task. Read-only. |
 | `task <FLOW-ID>` | `task.md` | Generate a single task file for one flow. |
+| `report <description>` | `report.md` | **Conversational.** Route a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
 | `check [domain]` | `check.md` | Verify acceptance criteria still hold against current code. |
-| `done <TASK-ID>` | `done.md` | Archive a completed task. |
+| `done <TASK-ID>` | `done.md` | Stage a task as `needs manual validation` after implementation. Does not archive. |
+| `validated <TASK-ID>` | `validated.md` | Archive a task after the user has manually validated it. |
 | (none / unknown) | — | Print this table and stop. |
 
 The canonical shape of a single flow's detail section is in `flow-template.md`. `init` and `add` both reference it.
@@ -74,7 +76,7 @@ UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>, <tag>
 TASK-NNN | <one-line summary> | <domain> | <FLOW-ID> | <status>
 ```
 
-`<status>` for tasks is `pending`, `in-progress`, or `done`.
+`<status>` for tasks is `pending`, `in-progress`, `needs manual validation`, or `done`. A task moves to `needs manual validation` when `done` runs (implementation complete, ACs code-traced, awaiting human verification). It moves to `done` only when archived — either by `validated` after the user confirms, or by `done --skip-validation` for the rare task with no user-observable surface area.
 
 If you find yourself writing a paragraph in any index, stop and rewrite as one line. Em-dashes, narrative, branch counts — none of that goes in the index. Detail lives in the per-flow section of the domain file.
 
@@ -139,7 +141,7 @@ Inside any task, the `## Findings` section is owned by `check`. It is added on t
 
 ## CLAUDE.md integration
 
-After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, treat the flow detail's `Active task:` line as the entry point to in-flight work for that flow, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work, run `/user-flow-dev check [domain]` after meaningful changes so status and tasks stay reconciled, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.
+After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, treat the flow detail's `Active task:` line as the entry point to in-flight work for that flow, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work (which stages the task as `needs manual validation` — it does not archive), leave `/user-flow-dev validated <TASK-ID>` to the user after they've manually exercised the flow, run `/user-flow-dev check [domain]` after meaningful changes so status and tasks stay reconciled, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.
 
 ## Anti-patterns — stop yourself if you catch yourself doing these
 
