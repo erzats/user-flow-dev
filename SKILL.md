@@ -5,13 +5,7 @@ description: Use when the user types /user-flow-dev (any subcommand), when the p
 
 # user-flow-dev
 
-A registry of **user flows** — behavioral descriptions of how the product should work — that lives at `.claude/user-flows/` and is consulted by Claude before, during, and after work.
-
-The problem this solves: in long sessions, context drifts. New requirements quietly break old flows and nobody notices until production. This skill keeps intended behavior as a first-class artifact that survives session resets and forces a verification loop.
-
-## Why "flows" not "stories"
-
-Flows are *behaviors*, not backlog items. They have branches, error paths, acceptance criteria, and stable IDs. They survive sprints. "Regression" means a documented flow's acceptance criteria stopped holding.
+A registry of **user flows** — behavioral descriptions of how the product should work — that lives at `.claude/user-flows/` and is consulted by Claude before, during, and after work. Flows survive session resets so new requirements don't quietly break old behavior. See `README.md` for the rationale.
 
 ## Routing
 
@@ -76,8 +70,6 @@ UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>, <tag>
 TASK-NNN | <one-line summary> | <domain> | <FLOW-ID> | <status>
 ```
 
-`<status>` for tasks is `pending`, `in-progress`, `needs manual validation`, or `done`. A task moves to `needs manual validation` when `done` runs (implementation complete, ACs code-traced, awaiting human verification). It moves to `done` only when archived — either by `validated` after the user confirms, or by `done --skip-validation` for the rare task with no user-observable surface area.
-
 If you find yourself writing a paragraph in any index, stop and rewrite as one line. Em-dashes, narrative, branch counts — none of that goes in the index. Detail lives in the per-flow section of the domain file.
 
 ### 4. No content redundancy across files
@@ -99,37 +91,22 @@ When in doubt, prefer the hard rule (merge). It is easier to split a fat domain 
 
 `UF-<DOMAIN>-NNN` where `<DOMAIN>` is the uppercased domain name (or short prefix for long names — `PAYMENTS` not `BILLING-AND-SUBSCRIPTIONS`). Numbers start at 001, append-only. Never renumber. If a flow is superseded, mark its detail section `Status: superseded by UF-X-NNN`; do not delete or renumber.
 
-## Status values
+## Status lifecycle
 
-Every flow has a `Status:` field. Status reflects the flow's lifecycle position; `pending` and `check` use it to decide what to surface.
+Every flow has a `Status:` field. `pending` and `check` use it to decide what to surface.
 
-| Status | Set by | `pending` surfaces? | `check` examines? | Meaning |
-|---|---|---|---|---|
-| `init` | `init` (default) | No | Yes | Inferred from existing code; not yet evaluated by `check`. The sentinel for "we wrote down what the code seems to do, but haven't verified ACs against it." |
-| `not started` | `add` (default), human | Yes | Yes | Intended behavior; implementation hasn't begun. |
-| `incomplete` | `check` | Yes | Yes | Some ACs verified (`✓ holds`), some have no implementation (`– not implemented`). |
-| `issues` | `check` | Yes | Yes | At least one AC `✗ broken`. Highest-priority status when multiple verdicts apply. |
-| `needs manual validation` | `check` | Yes | Yes | At least one AC `⚠ unclear` (and none broken). The flow needs a human to confirm. |
-| `completed` | `check` | No | Yes | All ACs `✓ holds`. The flow is verified working as of the last `check`. |
-| `deferred` | human | No | No | Future behavior, not currently planned. `check` cannot infer this — only humans set it. |
-| `superseded by UF-X-NNN` | human | No | No | Replaced by another flow. Kept for traceability. `check` cannot infer this — only humans set it. |
+| Status | Set by | Surfaces in `pending`? | Meaning |
+|---|---|---|---|
+| `init` | `init` | No | Inferred from existing code; not yet evaluated by `check`. |
+| `not started` | `add`, human | Yes | Intended behavior; implementation hasn't begun. |
+| `incomplete` | `check` | Yes | Some ACs verified, some not implemented. |
+| `issues` | `check` | Yes | At least one AC `✗ broken`. |
+| `needs manual validation` | `check`, `done` | Yes | At least one AC `⚠ unclear` (and none broken), or implementation just landed and awaits human verification. |
+| `completed` | `check`, `validated` | No | All ACs verified holding. |
+| `deferred` | human only | No | Future behavior, not currently planned. `check` will not overwrite. |
+| `superseded by UF-X-NNN` | human only | No | Replaced by another flow. `check` will not overwrite. |
 
-### Who writes what
-
-- **`init`** writes `Status: init` for every flow it generates. After `init`, `pending` is empty.
-- **`add`** writes `Status: not started` for every new flow (since `add` typically describes new or about-to-build behavior). The flow surfaces in `pending` immediately.
-- **`check`** writes one of `incomplete` / `issues` / `needs manual validation` / `completed` based on the per-flow verdict (see `check.md` "Step 4 — Compute per-flow status"). It also reconciles each examined flow's task — creating one if findings exist and none does, refreshing the `## Findings` section of an existing one, or archiving one when the flow flips to `completed`. `check` never overwrites `deferred` or `superseded` — those are intent flags it has no signal for.
-- **Humans** set `deferred` (intentional non-implementation) and `superseded by UF-X-NNN` (replacement relationship). Both encode product/refactoring intent that cannot be derived from code analysis.
-
-### Verdict precedence in `check`
-
-When a flow has mixed AC verdicts, `check` picks the highest-priority status that applies:
-
-1. Any `✗ broken` → `issues`
-2. Any `⚠ unclear` (and none broken) → `needs manual validation`
-3. Mix of `✓ holds` and `– not implemented` → `incomplete`
-4. All `– not implemented` → `not started`
-5. All `✓ holds` → `completed`
+The verdict precedence `check` uses to compute these statuses (broken > unclear > incomplete > completed) is in `check.md` Step 4. Don't restate it elsewhere.
 
 ## Tasks and findings
 
@@ -141,17 +118,13 @@ Inside any task, the `## Findings` section is owned by `check`. It is added on t
 
 ## CLAUDE.md integration
 
-After `init`, the project's CLAUDE.md gets a small instruction block (full snippet in `init.md`) telling future Claude to: read `overview.md` at session start, load the relevant domain file before touching its area, treat the flow detail's `Active task:` line as the entry point to in-flight work for that flow, call `/user-flow-dev done <TASK-ID>` automatically when finishing implementation work (which stages the task as `needs manual validation` — it does not archive), leave `/user-flow-dev validated <TASK-ID>` to the user after they've manually exercised the flow, run `/user-flow-dev check [domain]` after meaningful changes so status and tasks stay reconciled, and flag any change that would violate a flow's acceptance criteria *before* making it. The CLAUDE.md update is always preview-then-confirm.
+After `init`, the project's CLAUDE.md gets a usage block telling future Claude when to read flow files, when to call `done`/`validated`/`check`, and to flag changes that would violate ACs. The exact snippet and placement rules are in `init.md` Step 9. The update is always preview-then-confirm.
 
 ## Anti-patterns — stop yourself if you catch yourself doing these
 
-- Asking the user "what domains do you want?" — infer them.
-- Asking "where should flows live?" or "should I use a different folder?" — the structure is fixed.
-- Writing files outside `.claude/user-flows/` (except the previewed CLAUDE.md update during `init`).
-- Writing prose in the index. One pipe-delimited line per flow.
-- Including schema, SQL, RLS policies, endpoint paths, or library names in flow detail. That is implementation.
+(File-scope and "infer domains" rules are covered in the Four invariants above; this list is for skill-wide behaviors not already pinned there.)
+
 - Adding a flow without a clarification round. See `add.md`.
 - Generating tasks in bulk. `task` operates on one flow at a time.
 - Marking a flow's acceptance criteria as verified without actually checking them against code or tests. See `check.md`.
 - Deleting completed task files. They go to `tasks/archive/`.
-- Creating a new domain for a single flow. Fold thin domains.

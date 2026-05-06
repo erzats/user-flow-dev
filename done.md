@@ -2,27 +2,15 @@
 
 Mark a task's implementation complete and stage it for manual validation. **Expected to be called automatically by Claude when finishing implementation work tied to a TASK-ID** — not just by the user.
 
-`done` does **not** archive the task. It flips the task and the linked flow to `needs manual validation` and leaves both open until the user runs `/user-flow-dev validated <TASK-ID>` after eyeballing the change. Archive happens there, never here.
+`done` does **not** archive the task. It flips the task and the linked flow to `needs manual validation` and leaves both open until the user runs `/user-flow-dev validated <TASK-ID>` after eyeballing the change. Archive happens there, never here. The default is two-phase because code-tracing can't prove a screen looks right or an interaction feels right; even pure helper code has downstream effects.
+
+The escape hatch (`--skip-validation`) exists for the rare task where Claude can articulate, in one sentence, why no user-observable behavior could possibly change. Use it almost never.
 
 **Scope:** writes inside `.claude/user-flows/` only.
 
-## Why this is two-phase
-
-Even pure helper code can have downstream effects on the user (a wrong type changes a render path, a mapper edit changes a saved value). Code-tracing in `check` cannot prove a screen looks right or that an interaction *feels* right. The default has to be: implementation done ⇒ ask the human to verify ⇒ then archive.
-
-The escape hatch (`--skip-validation`) exists for the rare task where Claude can articulate, in one sentence, why no user-observable behavior could possibly change. The bar is high. Use it almost never.
-
 ## When Claude should call this autonomously
 
-If the project's CLAUDE.md mentions user-flow-dev (it should, after `init`), then any time Claude completes implementation work that closes out a `TASK-NNN`, it should run this command without being asked. Specifically:
-
-- Just merged a PR / committed code that completes a tracked task.
-- Verified that the flow's acceptance criteria hold against code (via `check` or by tracing specific code/tests in the same session).
-- The task file in `tasks/<domain>/TASK-NNN.md` exists and matches the work done.
-
-If the work is partial — only some branches done, AC not yet code-verified — do not call `done`. Update `todo.md`'s status column to `in-progress` instead (this is a manual edit, no separate command).
-
-After `done` runs, the task is **not** finished from the user's perspective. The user — and only the user — closes it via `/user-flow-dev validated`.
+After completing implementation that closes a `TASK-NNN` — committed code matches the task and the flow's ACs are verified against code (via `check` or inline tracing in the same session). If branches are still TODO or ACs aren't verified, leave the task `in-progress` (edit `todo.md`); don't call `done`.
 
 ## Procedure
 

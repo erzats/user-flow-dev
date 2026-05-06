@@ -124,59 +124,9 @@ The domain summaries are the same one-clause summaries that lead the domain file
 
 ### Step 7: Write each domain file
 
-Each domain file leads with a 2-sentence summary, then the flow index, then full flow detail. Each flow detail follows `flow-template.md` exactly. Read `flow-template.md` before writing.
+Each domain file leads with a 2-sentence summary, then the flow index (one pipe-delimited line per flow, same as `overview.md`), then full flow detail separated by `---`. Each flow detail starts with `## UF-<DOMAIN>-NNN — <Title>` (so an agent can grep-jump by ID) and follows `flow-template.md` exactly — read it before writing. Set `Status: init` for every flow.
 
-Shape:
-
-```markdown
-# Domain: <name>
-
-<Two sentences max. What this domain covers and any cross-cutting note that applies to all flows in it (e.g. "SSO only — no password flows" or "All charges go through Stripe").>
-
-## Index
-
-UF-<DOMAIN>-001 | <Title> | <domain> | tags: ...
-UF-<DOMAIN>-002 | <Title> | <domain> | tags: ...
-...
-
----
-
-## UF-<DOMAIN>-001 — <Title>
-
-Status: init
-Surface: <web | mobile | both | admin-only>
-Actor: <role(s)>
-Tags: <tag>, <tag>, <tag>
-
-### User goal
-<one sentence>
-
-### Preconditions
-- <state required>
-
-### Main path
-1. ...
-
-### Branches / error paths
-- **<Name>:** ...
-
-### Acceptance criteria
-- ...
-
-### Depends on
-<UF-... IDs or "none">
-
----
-
-## UF-<DOMAIN>-002 — <Title>
-...
-```
-
-Rules:
-- The `## Index` section repeats the one-liner per flow (yes, the same line that's in `overview.md`). This makes the file scannable on its own.
-- Each flow detail starts with `## UF-<DOMAIN>-NNN — <Title>` so an agent can grep-jump to a specific flow by ID.
-- `---` separators between flow detail sections.
-- Flow content follows `flow-template.md` exactly. Do not invent new sections.
+Do not invent sections that aren't in `flow-template.md`. The 2-sentence summary at the top is the same one-clause summary used in `overview.md`'s domains list.
 
 ### Step 8: Write `tasks/todo.md`
 
@@ -213,23 +163,40 @@ If the user accepts, insert the snippet as a top-level `## User flows` section n
 
 If the user declines, do not write to CLAUDE.md and note the decline in the final summary.
 
-### Step 10: Confirm
+### Step 10: Propose `.claude/settings.json` permission rules (preview, then confirm)
+
+`check` and `done` can fire many edits inside `.claude/user-flows/` in one run. Without an allowlist, each edit triggers an approval prompt. Offer to add allow rules to the project's `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Edit(.claude/user-flows/**)",
+      "Write(.claude/user-flows/**)"
+    ]
+  }
+}
+```
+
+Show the user the addition (merging into any existing `permissions.allow` array if one is present, creating the file otherwise) and ask before writing. If they decline, note it and move on. The skill works fine without it; the rules just remove an interruption.
+
+### Step 11: Confirm
 
 Print a one-paragraph summary including:
 - Number of domains and total flows created
 - The exact list of file paths written under `.claude/user-flows/`
 - Whether CLAUDE.md was updated, declined, or skipped
-- Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones
+- Whether the `.claude/settings.json` permission rules were added, declined, or skipped
+- Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones — this is normal, not a sign the system is empty
 - Suggested next step: `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
 
 Listing every file path is non-negotiable — the user must be able to see what changed without diffing.
 
 ## Anti-patterns specific to init
 
+(File-scope and "infer domains" rules live in SKILL.md's Four invariants — not restated here.)
+
 - Phase 1 writing files. Don't.
-- Asking the user to name domains. Infer them.
-- Asking "should I use this folder structure?". The answer is yes.
-- Writing files outside `.claude/user-flows/` during Phase 2 (CLAUDE.md is the only exception, and only after preview-and-confirm).
 - Generating fewer than 3 candidate flows for a domain unless that domain has distinct actors/lifecycle/risk that justify keeping it small.
 - Generating more than 12 flows for a domain. Split it.
 - Adding flows for behavior that the README and code clearly don't support. Better to stop at "main flows" and let the user add later than to fabricate.

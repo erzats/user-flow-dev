@@ -61,7 +61,7 @@ For each AC bullet, decide one of:
 | `✗ broken` | Code or tests demonstrably violate the criterion. | When you can point to specific code that contradicts the AC. Cite where and explain. |
 | `– not implemented` | The flow's implementation isn't present at all. | When no code corresponds to the flow. Distinct from `unclear`. |
 
-A `✓ holds` without a file:line citation is invalid — downgrade it to `⚠ unclear`. A `⚠` you can't resolve in 60 seconds is a `⚠`, not a `✓`.
+A `✓ holds` without a file:line citation is invalid — downgrade it to `⚠ unclear`.
 
 ### Step 4 — Compute per-flow status
 
@@ -231,7 +231,6 @@ It does not:
 
 ## Anti-patterns specific to check
 
-- **Vibes-based verification.** Marking ACs `✓ holds` because the code "looks roughly right". If you didn't trace specific code, it's `⚠`. This is the most important rule in this file.
 - Reasoning about ACs against the AC text alone, without searching the codebase. The check is against code, not against itself.
 - Citing a file without a line range or function. A bare filename is not a citation.
 - Modifying any flow field other than `Status:` and `Active task:`. ACs and other content change deliberately, not as a side effect.

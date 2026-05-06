@@ -87,17 +87,7 @@ If the domain file exists:
 
 If the domain file does not exist, create it with the shape from `init.md` Step 7 (2-sentence summary + index + first flow detail).
 
-Flow detail follows `flow-template.md` exactly. Do not invent new sections. The template's required sections are:
-
-- Status / Surface / Actor / Tags (front-matter style under the header). Default `Status: not started` for new flows; use `Status: needs manual validation` if the user waived clarification (Step 4).
-- `### User goal`
-- `### Preconditions`
-- `### Main path`
-- `### Branches / error paths` — must contain at least one entry
-- `### Acceptance criteria`
-- `### Depends on`
-
-A flow with no branches is a sign Step 3 was skipped — go back.
+Flow detail follows `flow-template.md` exactly — do not invent new sections. Default `Status: not started`; use `Status: needs manual validation` if the user waived clarification (Step 4). The `### Branches / error paths` section must contain at least one entry — a flow with no branches is a sign Step 3 was skipped, go back.
 
 ## Step 7 — Confirm
 
@@ -112,9 +102,5 @@ Print:
 
 - One-shotting the flow from the user's first message.
 - Asking questions one at a time — combine them.
-- Writing a flow with no branches.
-- Writing a flow with no acceptance criteria.
-- Writing implementation detail (table names, RPC paths, library calls) inside the flow.
+- Writing a flow with no branches or no acceptance criteria.
 - Putting the flow in a brand-new single-flow domain when a sibling domain fits and the flow has no distinct actor/lifecycle/risk.
-- Inventing sections not in `flow-template.md`.
-- Restating the flow content anywhere except the one detail section in the domain file.
