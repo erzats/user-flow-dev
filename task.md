@@ -27,7 +27,7 @@ Generate a manual task file for **one** specific flow. **Never bulk-generates.**
 
 Read the matching domain file. Locate the `## UF-<DOMAIN>-NNN — ...` section. You need the full detail (branches + AC) to scope the task — even though the task file won't restate it.
 
-Also check the flow detail for an `Active task:` line. If present, the flow already has an open task — stop and tell the user the existing task ID and path. Do not create a duplicate. (The user can add work to the existing task, or run `/user-flow-dev done` if it's already complete.) If absent, scan `tasks/<domain>/TASK-*.md` for any file whose `**Flow:**` matches the requested flow ID as a fallback check, in case the `Active task:` line was missed.
+Also check the flow detail for an `Active task:` line. If present, the flow already has an open task — stop and tell the user the existing task ID and path. Do not create a duplicate. (The user can add work to the existing task, or run `/user-flow-dev done` to stage it for manual validation if implementation is complete.) If absent, scan `tasks/<domain>/TASK-*.md` for any file whose `**Flow:**` matches the requested flow ID as a fallback check, in case the `Active task:` line was missed.
 
 ### Step 3 — Pick a TASK ID
 
@@ -63,7 +63,7 @@ Shape:
 
 ## Verification
 
-When done, the flow's acceptance criteria must hold. Run `/user-flow-dev check <domain>` (or manually verify each AC against code/tests) before marking this task done.
+When implementation is complete, the flow's acceptance criteria must hold. Run `/user-flow-dev check <domain>` (or manually verify each AC against code/tests), then `/user-flow-dev done TASK-NNN` to stage the task for manual validation. The user runs `/user-flow-dev validated TASK-NNN` to archive it after exercising the flow.
 
 ## Notes
 
@@ -90,7 +90,7 @@ In the domain file, edit the `## UF-<DOMAIN>-NNN — ...` section. Insert this l
 Active task: tasks/<domain>/TASK-NNN.md
 ```
 
-This is the same line that `/user-flow-dev check` writes when it creates a task. Keeping the format consistent means there is exactly one place to look from any flow detail to find its open task. The line is removed when the task is archived (by `done` or by `check`).
+This is the same line that `/user-flow-dev check` writes when it creates a task. Keeping the format consistent means there is exactly one place to look from any flow detail to find its open task. The line is removed when the task is archived — by `validated` (default closure path), by `done --skip-validation` (rare), or by `check` when the linked flow flips to `completed`.
 
 ### Step 8 — Confirm
 

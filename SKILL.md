@@ -15,7 +15,7 @@ The first word of `$ARGUMENTS` selects the subcommand. Read the matching referen
 |---|---|---|
 | `init` | `init.md` | First-time scan: infer domains, propose flows, write files. |
 | `add` | `add.md` | **Conversational.** Add one flow. Never one-shot. |
-| `pending` | `pending.md` | List flows with no associated task. Read-only. |
+| `pending [status]` | `pending.md` | List flows that need attention; optional status slug narrows to one status. Read-only. |
 | `task <FLOW-ID>` | `task.md` | Generate a single task file for one flow. |
 | `report <description>` | `report.md` | **Conversational.** Route a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
 | `check [domain]` | `check.md` | Verify acceptance criteria still hold against current code. |

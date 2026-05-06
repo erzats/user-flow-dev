@@ -10,7 +10,7 @@ Deliberately **not** called "user stories" — these are behavioral specs with b
 - **Generates a dense, scannable index** so an agent can find relevant flows without reading every domain file.
 - **Forces a clarification round** before adding a flow, so branches and edges actually get captured.
 - **Verifies acceptance criteria against real code** with a strict no-vibes-based-verification rule.
-- **Tracks tasks per flow** and archives them on completion.
+- **Tracks tasks per flow** with a two-phase close: `done` stages a task as `needs manual validation`, `validated` archives it once the user has actually exercised the flow.
 
 ## Subcommands
 
@@ -18,23 +18,25 @@ Deliberately **not** called "user stories" — these are behavioral specs with b
 |---|---|
 | `/user-flow-dev init` | Scan codebase, infer domains, propose flows, write files. |
 | `/user-flow-dev add <description>` | Conversational add of a single flow with required clarification round. |
-| `/user-flow-dev pending` | List flows with no associated task. Read-only. |
+| `/user-flow-dev report <description>` | Conversational route of a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
+| `/user-flow-dev pending [status]` | List flows that need attention; optional status slug (e.g. `issues`, `needs-manual-validation`) narrows to one status. Read-only. |
 | `/user-flow-dev task <FLOW-ID>` | Generate a task file for one flow. |
-| `/user-flow-dev check [domain]` | Verify acceptance criteria still hold against current code. |
-| `/user-flow-dev done <TASK-ID>` | Archive a completed task. |
+| `/user-flow-dev check [domain]` | Verify acceptance criteria still hold against current code; reconcile statuses and tasks. |
+| `/user-flow-dev done <TASK-ID>` | Stage a task as `needs manual validation` after implementation. Does not archive. |
+| `/user-flow-dev validated <TASK-ID>` | Archive a task after the user has manually validated it; flips the linked flow to `completed`. |
 
 ## Install (personal, all projects)
 
 Clone into your personal skills directory:
 
 ```bash
-git clone https://github.com/<your-username>/user-flow-dev.git ~/.claude/skills/user-flow-dev
+git clone https://github.com/erzats/user-flow-dev.git ~/.claude/skills/user-flow-dev
 ```
 
 On Windows (PowerShell):
 
 ```powershell
-git clone https://github.com/<your-username>/user-flow-dev.git $HOME\.claude\skills\user-flow-dev
+git clone https://github.com/erzats/user-flow-dev.git $HOME\.claude\skills\user-flow-dev
 ```
 
 The `/user-flow-dev` slash command appears the next time you start Claude Code.
@@ -42,7 +44,7 @@ The `/user-flow-dev` slash command appears the next time you start Claude Code.
 ## Install (project-local, just this repo)
 
 ```bash
-git clone https://github.com/<your-username>/user-flow-dev.git .claude/skills/user-flow-dev
+git clone https://github.com/erzats/user-flow-dev.git .claude/skills/user-flow-dev
 ```
 
 Commit `.claude/skills/user-flow-dev/` if you want the team to share it; otherwise add it to `.gitignore`.
@@ -66,7 +68,7 @@ cd ~/.claude/skills/user-flow-dev && git pull
     <domain>/          ← active task files
 ```
 
-After init, the skill offers to add a small instruction block to your project's CLAUDE.md so future Claude sessions read `overview.md` on session start and call `/user-flow-dev done <TASK-ID>` when finishing implementation work.
+After init, the skill offers to add a small instruction block to your project's CLAUDE.md so future Claude sessions read `overview.md` on session start, call `/user-flow-dev done <TASK-ID>` when finishing implementation work (which stages the task as `needs manual validation`), and leave `/user-flow-dev validated <TASK-ID>` to the user once they've manually confirmed the flow works.
 
 ## Design constraints
 

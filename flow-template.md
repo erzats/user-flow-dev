@@ -7,7 +7,7 @@ Canonical structure for a single flow's detail section. Used by `init` and `add`
 ```markdown
 ## UF-<DOMAIN>-NNN — <Title>
 
-Status: active
+Status: <not started | init | incomplete | issues | needs manual validation | completed | deferred | superseded by UF-X-NNN>
 Active task: tasks/<domain>/TASK-NNN.md   ← optional; present only while a task is open for this flow
 Surface: <web | mobile | both | admin-only>
 Actor: <role(s) — e.g. "player", "venue admin", "system">
