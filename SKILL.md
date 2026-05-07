@@ -21,6 +21,9 @@ The first word of `$ARGUMENTS` selects the subcommand. Read the matching referen
 | `check [domain]` | `check.md` | Verify acceptance criteria still hold against current code. |
 | `done <TASK-ID>` | `done.md` | Stage a task as `needs manual validation` after implementation. Does not archive. |
 | `validated <TASK-ID>` | `validated.md` | Archive a task after the user has manually validated it. |
+| `split <domain> [hint]` | `split.md` | **Conversational.** Refactor one domain into two or more by reassigning flows. |
+| `merge <d1> <d2> [into <target>]` | `merge.md` | **Conversational.** Combine two domains into one. |
+| `rename <domain> <new-name>` | `rename.md` | Rename a single domain. Preview-then-confirm. |
 | (none / unknown) | — | Print this table and stop. |
 
 The canonical shape of a single flow's detail section is in `flow-template.md`. `init` and `add` both reference it.
@@ -89,7 +92,11 @@ When in doubt, prefer the hard rule (merge). It is easier to split a fat domain 
 
 ## Flow IDs
 
-`UF-<DOMAIN>-NNN` where `<DOMAIN>` is the uppercased domain name (or short prefix for long names — `PAYMENTS` not `BILLING-AND-SUBSCRIPTIONS`). Numbers start at 001, append-only. Never renumber. If a flow is superseded, mark its detail section `Status: superseded by UF-X-NNN`; do not delete or renumber.
+`UF-<DOMAIN>-NNN` where `<DOMAIN>` is the uppercased domain name (or short prefix for long names — `PAYMENTS` not `BILLING-AND-SUBSCRIPTIONS`). Numbers start at 001 and append. Within a domain, numbers are append-only — never renumber a flow that stays in its domain.
+
+Renumbering happens **only** during domain refactors (`split`, `merge`, `rename`). Those commands renumber the moving flows, leave a tombstone at the original ID with `Status: moved to UF-X-NNN`, and add a `Renamed from: UF-X-NNN` line on the new flow. The tombstone makes external references (commit messages, PRs, conversations) resolvable. Refactor commands also auto-rewrite references to the renumbered IDs across `.claude/user-flows/`.
+
+If a flow is superseded — its behavior is replaced by a different, newer flow — mark its detail section `Status: superseded by UF-X-NNN`; do not delete or renumber. `superseded by` is for "a different flow replaces this one"; `moved to` is for "the same flow now has a new ID."
 
 ## Status lifecycle
 
@@ -105,6 +112,7 @@ Every flow has a `Status:` field. `pending` and `check` use it to decide what to
 | `completed` | `check`, `validated` | No | All ACs verified holding. |
 | `deferred` | human only | No | Future behavior, not currently planned. `check` will not overwrite. |
 | `superseded by UF-X-NNN` | human only | No | Replaced by another flow. `check` will not overwrite. |
+| `moved to UF-X-NNN` | `split`, `merge`, `rename` | No | Tombstone — flow content moved to a new ID during a domain refactor. The new ID is canonical; this is a redirect for external references. |
 
 The verdict precedence `check` uses to compute these statuses (broken > unclear > incomplete > completed) is in `check.md` Step 4. Don't restate it elsewhere.
 

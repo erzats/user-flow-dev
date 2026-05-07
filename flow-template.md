@@ -7,7 +7,8 @@ Canonical structure for a single flow's detail section. Used by `init` and `add`
 ```markdown
 ## UF-<DOMAIN>-NNN — <Title>
 
-Status: <not started | init | incomplete | issues | needs manual validation | completed | deferred | superseded by UF-X-NNN>
+Status: <not started | init | incomplete | issues | needs manual validation | completed | deferred | superseded by UF-X-NNN | moved to UF-X-NNN>
+Renamed from: UF-X-NNN   ← optional; present only on flows that came from a split/merge/rename
 Active task: tasks/<domain>/TASK-NNN.md   ← optional; present only while a task is open for this flow
 Surface: <web | mobile | both | admin-only>
 Actor: <role(s) — e.g. "player", "venue admin", "system">
@@ -37,7 +38,8 @@ Tags: <tag>, <tag>, <tag>
 
 ## Field rules
 
-- **Status:** Required, one of: `init`, `not started`, `incomplete`, `issues`, `needs manual validation`, `completed`, `deferred`, `superseded by UF-X-NNN`. `init` is the sentinel for "inferred from code, not yet evaluated by check" and is what the `init` command writes. `add` defaults new flows to `not started`. `check` writes `incomplete` / `issues` / `needs manual validation` / `completed` based on per-AC verdicts. Humans set `deferred` and `superseded` (intent signals `check` cannot infer). `pending` surfaces only `not started` / `incomplete` / `issues` / `needs manual validation`; the others are considered settled. See SKILL.md "Status values" for the full mapping.
+- **Status:** Required, one of: `init`, `not started`, `incomplete`, `issues`, `needs manual validation`, `completed`, `deferred`, `superseded by UF-X-NNN`, `moved to UF-X-NNN`. `init` is the sentinel for "inferred from code, not yet evaluated by check" and is what the `init` command writes on existing projects. `add` defaults new flows to `not started`; `init` on a greenfield project also writes `not started`. `check` writes `incomplete` / `issues` / `needs manual validation` / `completed` based on per-AC verdicts. Humans set `deferred` and `superseded`. `split` / `merge` / `rename` write `moved to UF-X-NNN` on the original (tombstone) IDs. `pending` surfaces only `not started` / `incomplete` / `issues` / `needs manual validation`; the others are considered settled. See SKILL.md "Status lifecycle" for the full mapping.
+- **Renamed from:** Optional. Present only on flows that came from a `split`, `merge`, or `rename`. Format: `Renamed from: UF-<OLDDOMAIN>-NNN`. The renamed-from line and the tombstone (`Status: moved to UF-X-NNN` at the old ID) form the redirect pair — both must exist together. Refactor commands write both; nothing else should touch them.
 - **Active task:** Optional. Present only while a task file exists for this flow. Added by `task` (manual) or `check` (findings). Removed by `done` or by `check` when the linked task is archived. Format is the relative path from the domain file: `tasks/<domain>/TASK-NNN.md`. The flow detail should never carry a stale `Active task:` line — at most one task per flow, and the line is the canonical pointer to it.
 - **Surface:** `web`, `mobile`, `both`, or `admin-only`. Used by `check` to narrow the search area in code.
 - **Actor:** role of whoever drives the flow. `system` is acceptable for background flows (webhook reconciliation, scheduled jobs).

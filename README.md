@@ -19,7 +19,7 @@ External trackers (Linear, Jira, Notion) don't fix this — they live outside th
 ## Use cases
 
 - **Existing project (primary).** `init` mines the code and docs to surface flows you've already built, so the registry starts already aligned with reality. From there, `add`/`report` extend it as the product evolves.
-- **Greenfield project (experimental — please report issues).** `init` accepts a project description, asks a short clarification round about target users, key features, and scope, then proposes domains and flows from the description alone. You get a behavioral skeleton to work against from the first commit. Domain split/merge isn't supported yet, so prefer broader, more general domains at the start — they can be reorganized manually as the project grows.
+- **Greenfield project (experimental — please report issues).** `init` accepts a project description, asks a short clarification round about target users, key features, and scope, then proposes domains and flows from the description alone. You get a behavioral skeleton to work against from the first commit. Use `split`, `merge`, and `rename` to refactor domains as the project's shape becomes clearer.
 
 ## Works in natural language, anywhere
 
@@ -49,6 +49,9 @@ The skill triages each one into a flow edit, a new flow, or a new task — which
 | `/user-flow-dev check [domain]` | Verify acceptance criteria still hold against current code; reconcile statuses and tasks. |
 | `/user-flow-dev done <TASK-ID>` | Stage a task as `needs manual validation` after implementation. Does not archive. |
 | `/user-flow-dev validated <TASK-ID>` | Archive a task after the user has manually validated it; flips the linked flow to `completed`. |
+| `/user-flow-dev split <domain> [hint]` | Conversational refactor of one domain into two or more by reassigning flows. Renumbers IDs, leaves tombstones, auto-rewrites references. |
+| `/user-flow-dev merge <d1> <d2> [into <target>]` | Conversational merge of two domains into one. Renumbers absorbed flows, converts the absorbed domain file to tombstones-only. |
+| `/user-flow-dev rename <domain> <new-name>` | Rename a domain. Preview-then-confirm. Numbers preserved, prefix changes. |
 
 ## Install (personal, all projects)
 

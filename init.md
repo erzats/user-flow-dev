@@ -37,7 +37,7 @@ In greenfield mode:
   5. Anything the user wants modeled as its own concern even if small (e.g. a billing area planned for later).
 - Treat the answers as on-par with code signal — they replace the scan inputs that don't exist yet.
 
-Domain split/merge isn't supported yet. On greenfield, **prefer broader, more general domains**. It is easier to live with a slightly fat domain and refine it manually later than to have flows scattered across thin domains the skill can't currently re-home for you.
+On greenfield, **prefer broader, more general domains**. It is easier to live with a slightly fat domain and refine it later via `/user-flow-dev split` than to start with thin domains and have to merge them.
 
 If the project is not greenfield, skip this step and continue with Step 2 normally.
 
@@ -54,7 +54,7 @@ Rules:
 - Default minimum: 3 flows per domain. If a candidate domain has 1–2 flows, fold them into the nearest neighbor.
 - Exception: keep a small domain when it has distinct actors, distinct lifecycle, or distinct risk profile. (See SKILL.md "Domain inference" for the trade-off.)
 - Aim for 4–8 domains for a typical small/medium project. More than 10 is usually over-segmented.
-- **Greenfield:** source 1 (app-level structure) is unavailable; sources 2 and 3, plus the clarification round answers, become primary. Aim for the low end of "4–8 domains" and tolerate fatter ones — domain split/merge tooling doesn't exist yet, so it is cheaper to resplit manually later than to start with thin domains.
+- **Greenfield:** source 1 (app-level structure) is unavailable; sources 2 and 3, plus the clarification round answers, become primary. Aim for the low end of "4–8 domains" and tolerate fatter ones — `/user-flow-dev split` is cheaper to invoke later than to recover from thin domains caused by aggressive splitting at init.
 
 ### Step 3: Generate candidate flows
 
