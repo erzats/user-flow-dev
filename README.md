@@ -1,16 +1,41 @@
 # user-flow-dev
 
-A Claude Code skill that maintains a living registry of **user flows** — behavioral descriptions of how a product should work — under `.claude/user-flows/` in your project. Designed for long Claude Code sessions where context drifts and old flows quietly break.
+A Claude Code skill that gives long-running coding agents **durable memory of how your product is supposed to behave**. Lives at `.claude/user-flows/` in your repo, domain-organized, indexed so an agent can find the relevant slice without reading everything.
 
-Deliberately **not** called "user stories" — these are behavioral specs with branches and acceptance criteria, not backlog items.
+## The problem it solves
 
-## What it does
+In long Claude Code projects, agents lose track of how previously-built pieces were supposed to work. You implement feature A in one session; ten sessions later you ask for feature B, which is tangential to A — and the agent quietly breaks A because nothing in its context says how A was supposed to behave. You squash, revert, re-explain, repeat.
 
-- **Infers domains** from your codebase (auth, payments, plus app-specific ones like `hunt-builder`) — you never name them.
-- **Generates a dense, scannable index** so an agent can find relevant flows without reading every domain file.
-- **Forces a clarification round** before adding a flow, so branches and edges actually get captured.
-- **Verifies acceptance criteria against real code** with a strict no-vibes-based-verification rule.
-- **Tracks tasks per flow** with a two-phase close: `done` stages a task as `needs manual validation`, `validated` archives it once the user has actually exercised the flow.
+External trackers (Linear, Jira, Notion) don't fix this — they live outside the repo and can't feed back into agent context. CLAUDE.md doesn't shard, so it gets too big to be useful. Cucumber feature files are test-runner-shaped, not registry-shaped.
+
+## The loop
+
+- **Capture** — `init` scans the codebase (or a project description, on a new project), infers domains, and writes one behavioral flow per piece of user-visible functionality. You never name the domains.
+- **Consult** — future sessions read `overview.md` first; the dense pipe-delimited index lets the agent pick the right domain file in a single read, keeping token cost flat as the project grows.
+- **Correct** — when the agent gets behavior wrong, `report` routes your natural-language correction into either a flow edit (capturing the nuance) or a new flow, plus a task to fix the code. The next session inherits the correction instead of you re-explaining.
+- **Verify** — `check` reconciles flow acceptance criteria against the actual code, with a strict no-vibes-based-verification rule.
+- **Close** — `done` stages a task as `needs manual validation`; `validated` archives it once you've actually exercised the flow.
+
+## Use cases
+
+- **Existing project (primary).** `init` mines the code and docs to surface flows you've already built, so the registry starts already aligned with reality. From there, `add`/`report` extend it as the product evolves.
+- **Greenfield project (experimental — please report issues).** `init` accepts a project description, asks a short clarification round about target users, key features, and scope, then proposes domains and flows from the description alone. You get a behavioral skeleton to work against from the first commit. Domain split/merge isn't supported yet, so prefer broader, more general domains at the start — they can be reorganized manually as the project grows.
+
+## Works in natural language, anywhere
+
+Both `add` and `report` are conversational. You can be at the keyboard, or in the Claude Code mobile/web app — on a walk, in a car, away from a screen — and dump:
+
+- "I just thought of an edge case for signup: what if the user's SSO provider returns an email that conflicts with an existing local account?"
+- "I noticed during testing that admin role changes don't propagate to active sessions until logout."
+- "What if lesser admins could approve refunds under $50?"
+
+The skill triages each one into a flow edit, a new flow, or a new task — whichever fits. By the time you're back at the keyboard, `pending` shows a queue ready to work on. You implement it on your own terms; the skill doesn't tell you how.
+
+## What it deliberately does not do
+
+- **Not a user-story tool.** These are behavioral specs with branches and acceptance criteria, not backlog items.
+- **Not an implementation guide.** No tables, RLS, endpoints, component names, or "how to build it" advice ever appears in a flow. The skill records *what* the application should do — *how* to build it is the user's domain. There is no `implement` subcommand and there will not be one.
+- **Not a sprint board.** No estimates, no assignees, no sprints. Tasks are just "the next work tied to this flow."
 
 ## Subcommands
 

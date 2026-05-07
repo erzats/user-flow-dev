@@ -98,7 +98,7 @@ Every flow has a `Status:` field. `pending` and `check` use it to decide what to
 | Status | Set by | Surfaces in `pending`? | Meaning |
 |---|---|---|---|
 | `init` | `init` | No | Inferred from existing code; not yet evaluated by `check`. |
-| `not started` | `add`, human | Yes | Intended behavior; implementation hasn't begun. |
+| `not started` | `add`, `init` (greenfield), human | Yes | Intended behavior; implementation hasn't begun. |
 | `incomplete` | `check` | Yes | Some ACs verified, some not implemented. |
 | `issues` | `check` | Yes | At least one AC `✗ broken`. |
 | `needs manual validation` | `check`, `done` | Yes | At least one AC `⚠ unclear` (and none broken), or implementation just landed and awaits human verification. |

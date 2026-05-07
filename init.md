@@ -19,7 +19,27 @@ Read these without asking the user:
 - `docs/` — any existing flow-like content
 - `supabase/migrations/` or equivalent — table names hint at domains
 
-Also accept any project description from `$ARGUMENTS` after the word `init`. Treat it as additional signal, not a replacement for the codebase scan.
+Also accept any project description from `$ARGUMENTS` after the word `init`. On a project that already has code, treat it as additional signal layered on top of the scan. On a greenfield project (see Step 1b), it becomes the primary signal.
+
+### Step 1b: Detect greenfield and clarify
+
+If the Step 1 signal is sparse — no `apps/`, `services/`, `packages/`, or `src/` with non-trivial content; no migrations; `package.json` absent or with no real dependencies; README empty or templated — treat this as a **greenfield** project.
+
+In greenfield mode:
+
+- The project description (from `$ARGUMENTS` and/or what you elicit in this step) is the **primary** signal, not additional.
+- If no description was provided in `$ARGUMENTS`, ask once: "Looks like a new project — describe what you're building." Wait for the response before continuing.
+- Run **one** broad clarification round before proposing domains. 3–5 questions max, covering:
+  1. Target users / actors (admin, regular user, lesser admin, guest, etc.).
+  2. Top user-visible features for an MVP.
+  3. Anything explicitly out of scope for now.
+  4. Scale / maturity expectations (single-tenant prototype vs multi-tenant SaaS, etc.) — only if it would change the domain shape.
+  5. Anything the user wants modeled as its own concern even if small (e.g. a billing area planned for later).
+- Treat the answers as on-par with code signal — they replace the scan inputs that don't exist yet.
+
+Domain split/merge isn't supported yet. On greenfield, **prefer broader, more general domains**. It is easier to live with a slightly fat domain and refine it manually later than to have flows scattered across thin domains the skill can't currently re-home for you.
+
+If the project is not greenfield, skip this step and continue with Step 2 normally.
 
 ### Step 2: Infer domains
 
@@ -34,6 +54,7 @@ Rules:
 - Default minimum: 3 flows per domain. If a candidate domain has 1–2 flows, fold them into the nearest neighbor.
 - Exception: keep a small domain when it has distinct actors, distinct lifecycle, or distinct risk profile. (See SKILL.md "Domain inference" for the trade-off.)
 - Aim for 4–8 domains for a typical small/medium project. More than 10 is usually over-segmented.
+- **Greenfield:** source 1 (app-level structure) is unavailable; sources 2 and 3, plus the clarification round answers, become primary. Aim for the low end of "4–8 domains" and tolerate fatter ones — domain split/merge tooling doesn't exist yet, so it is cheaper to resplit manually later than to start with thin domains.
 
 ### Step 3: Generate candidate flows
 
@@ -45,6 +66,8 @@ For each domain, list 4–10 candidate flows. Each candidate needs:
 - Mental note of branches you'd cover, but don't write them yet
 
 Capture branching at this stage by listing it in a comment, not the title. The flow `UF-PAYMENTS-002 — Subscribe via Stripe Checkout` should mentally include "card declined", "user abandons checkout", "webhook arrives late" — they become branch entries in Phase 2.
+
+On greenfield, branches come from the clarification-round answers and obvious edges those answers imply. Don't fabricate branches the user didn't allude to — let them land later via `add` or `report` once the user has a real opinion on them.
 
 ### Step 4: Present for confirmation
 
@@ -124,7 +147,11 @@ The domain summaries are the same one-clause summaries that lead the domain file
 
 ### Step 7: Write each domain file
 
-Each domain file leads with a 2-sentence summary, then the flow index (one pipe-delimited line per flow, same as `overview.md`), then full flow detail separated by `---`. Each flow detail starts with `## UF-<DOMAIN>-NNN — <Title>` (so an agent can grep-jump by ID) and follows `flow-template.md` exactly — read it before writing. Set `Status: init` for every flow.
+Each domain file leads with a 2-sentence summary, then the flow index (one pipe-delimited line per flow, same as `overview.md`), then full flow detail separated by `---`. Each flow detail starts with `## UF-<DOMAIN>-NNN — <Title>` (so an agent can grep-jump by ID) and follows `flow-template.md` exactly — read it before writing.
+
+Status assignment depends on mode:
+- **Normal init:** set `Status: init` for every flow. The flows describe behavior already in the code; `check` will evaluate them.
+- **Greenfield init:** set `Status: not started` for every flow. There is no existing code to "infer from," and `not started` correctly surfaces the flows in `pending` as work to do.
 
 Do not invent sections that aren't in `flow-template.md`. The 2-sentence summary at the top is the same one-clause summary used in `overview.md`'s domains list.
 
@@ -187,8 +214,10 @@ Print a one-paragraph summary including:
 - The exact list of file paths written under `.claude/user-flows/`
 - Whether CLAUDE.md was updated, declined, or skipped
 - Whether the `.claude/settings.json` permission rules were added, declined, or skipped
-- Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones — this is normal, not a sign the system is empty
-- Suggested next step: `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
+- Status note (normal init): all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones — this is normal, not a sign the system is empty
+- Status note (greenfield init): all generated flows have `Status: not started` and will surface in `pending` immediately as work to do; `check` won't be useful until there's code to verify against
+- Suggested next step (normal): `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
+- Suggested next step (greenfield): `/user-flow-dev pending` to see the seeded flows, pick one to implement, then call `/user-flow-dev done <TASK-ID>` when implementation lands and `/user-flow-dev validated <TASK-ID>` after manual verification
 
 Listing every file path is non-negotiable — the user must be able to see what changed without diffing.
 
@@ -199,5 +228,5 @@ Listing every file path is non-negotiable — the user must be able to see what 
 - Phase 1 writing files. Don't.
 - Generating fewer than 3 candidate flows for a domain unless that domain has distinct actors/lifecycle/risk that justify keeping it small.
 - Generating more than 12 flows for a domain. Split it.
-- Adding flows for behavior that the README and code clearly don't support. Better to stop at "main flows" and let the user add later than to fabricate.
+- Adding flows for behavior that the README and code clearly don't support — *unless this is greenfield init*, in which case the project description plus clarification-round answers are the support. Even in greenfield, don't invent behavior the user didn't allude to; let it land later via `add` or `report`.
 - Inventing template fields not in `flow-template.md`. The template is canonical.
