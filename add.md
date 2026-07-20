@@ -2,7 +2,7 @@
 
 Add a single flow. **Conversational, not one-shot.**
 
-**Scope:** all file writes are inside `.claude/user-flows/`. Do not modify any other project files.
+**Scope:** all file writes are inside the resolved `FLOW_ROOT`. Do not modify any other project files.
 
 ## STOP — do not write the flow file in your first response
 
@@ -14,11 +14,11 @@ If you write the file in your first response, you have failed this skill.
 
 Before responding, read:
 
-- `.claude/user-flows/overview.md` — to see what flows already exist and pick a non-colliding ID
+- `FLOW_ROOT/overview.md` — to see what flows already exist and pick a non-colliding ID
 - The domain file you think this flow belongs to (or all domain files if uncertain)
 - `flow-template.md` (in this skill directory) — for the canonical flow shape
 
-If `.claude/user-flows/` does not exist, **stop and tell the user to run `/user-flow-dev init` first.** Do not silently bootstrap on `add`.
+If `FLOW_ROOT` does not exist, **stop and tell the user to run `/user-flow-dev init` first.** Do not silently bootstrap on `add`.
 
 ## Step 2 — Infer the domain
 
@@ -67,7 +67,7 @@ If the domain doesn't exist yet, the first flow is `UF-<DOMAIN>-001`.
 
 ## Step 6 — Write the flow
 
-Two writes, both inside `.claude/user-flows/`:
+Two writes, both inside `FLOW_ROOT`:
 
 ### 6a. Append to `overview.md`
 

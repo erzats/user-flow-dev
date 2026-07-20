@@ -7,7 +7,7 @@ Capture a user-reported issue, regression, or behavior wish and route it to the 
 - "When I do Y, Z should happen" → either tightens AC on an existing flow or describes a new one.
 - "We never specced this but it matters" → likely a missing flow.
 
-**Scope:** writes inside `.claude/user-flows/` only.
+**Scope:** writes inside the resolved `FLOW_ROOT` only.
 
 ## When Claude should call this autonomously
 

@@ -1,11 +1,22 @@
 ---
 name: user-flow-dev
-description: Use when the user types /user-flow-dev (any subcommand), when the project contains .claude/user-flows/, when work is about to touch a documented flow's domain, when a UF-* flow ID appears in conversation, or when finishing a task tied to a flow. Triggers also include: starting on a feature in a project with documented flows; when a proposed change risks violating an existing flow's acceptance criteria; and when the user reports a bug, regression, or "should work like X" expectation that maps to user-visible behavior — propose `/user-flow-dev report` to capture it as a flow change or new flow.
+description: Use when the user types /user-flow-dev (any subcommand); a project has a documented user-flow registry; work touches a documented behavior; a UF-* flow ID appears; or a user reports a behavioral issue or approves a product-decision change to a documented flow.
 ---
 
 # user-flow-dev
 
-A registry of **user flows** — behavioral descriptions of how the product should work — that lives at `.claude/user-flows/` and is consulted by Claude before, during, and after work. Flows survive session resets so new requirements don't quietly break old behavior. See `README.md` for the rationale.
+A registry of **user flows** — behavioral descriptions of how the product should work — is consulted before, during, and after work. Flows survive session resets so new requirements do not quietly break old behavior. See `README.md` for the rationale.
+
+## Registry root (resolve before every subcommand)
+
+Set `FLOW_ROOT` to the project's existing canonical registry before reading or writing anything:
+
+1. If repository instructions (such as `AGENTS.md` or `CLAUDE.md`) explicitly name a user-flow path, use that path.
+2. Otherwise, use the one existing registry among `docs/user-flows/`, `.Codex/user-flows/`, or `.claude/user-flows/`.
+3. If more than one exists and instructions do not resolve the conflict, stop and ask the user; never merge or migrate them.
+4. If none exists, `init` creates `.Codex/user-flows/`; every other subcommand tells the user to run `init` first.
+
+All references to `FLOW_ROOT` below mean the resolved path. Do not create a second registry merely because a different conventional path is absent.
 
 ## Routing
 
@@ -18,6 +29,7 @@ The first word of `$ARGUMENTS` selects the subcommand. Read the matching referen
 | `pending [status]` | `pending.md` | List flows that need attention; optional status slug narrows to one status. Read-only. |
 | `task <FLOW-ID>` | `task.md` | Generate a single task file for one flow. |
 | `report <description>` | `report.md` | **Conversational.** Route a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
+| `decision <description>` | `decision.md` | **Conversational.** Record an approved product decision that changes an existing flow without classifying it as a defect. |
 | `check [domain]` | `check.md` | Verify acceptance criteria still hold against current code. |
 | `done <TASK-ID>` | `done.md` | Stage a task as `needs manual validation` after implementation. Does not archive. |
 | `validated <TASK-ID>` | `validated.md` | Archive a task after the user has manually validated it. |
@@ -29,10 +41,10 @@ The canonical shape of a single flow's detail section is in `flow-template.md`. 
 
 These hold across every subcommand. The reference files assume you know them.
 
-### 1. File structure (fixed — do not propose alternatives)
+### 1. File structure (fixed inside `FLOW_ROOT` — do not propose alternatives)
 
 ```
-.claude/user-flows/
+FLOW_ROOT/
   overview.md          ← one-line-per-flow index, domain list, nothing else
   domains/
     <domain>.md        ← 2-sentence domain summary + flow index + flow detail
@@ -42,15 +54,15 @@ These hold across every subcommand. The reference files assume you know them.
     <domain>/          ← TASK-NNN.md files for in-progress tasks
 ```
 
-If any of this is missing when you need it, **create it without asking — but only inside `.claude/user-flows/`.**
+If a required registry file is missing, create it only inside `FLOW_ROOT` when the active subcommand permits creation.
 
 Hard scope rules:
-- Do not migrate, modify, or delete files outside `.claude/user-flows/`.
-- Do not silently rewrite existing project documentation in `docs/`, `README.md`, or anywhere else.
-- The one exception is the CLAUDE.md update during `init`, which is always preview-then-confirm — never silent.
-- When you create files inside `.claude/user-flows/`, list every file path you wrote in your final confirmation message.
+- Do not migrate, modify, or delete files outside `FLOW_ROOT`.
+- `FLOW_ROOT` may be under `docs/` when repository instructions declare it canonical; edits there are registry edits, not unrelated documentation rewrites.
+- The one exception is the AGENTS.md update during `init`, which is always preview-then-confirm — never silent.
+- When you create files inside `FLOW_ROOT`, list every file path you wrote in your final confirmation message.
 
-Do not ask the user where flows should live or whether to use a different folder. The structure above is the answer.
+Do not ask the user where flows should live when the repository resolves it. Ask only when multiple registries exist without an explicit canonical path.
 
 ### 2. Behavioral, not implementation
 
@@ -116,9 +128,9 @@ When a task exists for a flow, the flow's detail section in the domain file carr
 
 Inside any task, the `## Findings` section is owned by `check`. It is added on the first check run that surfaces issues for the linked flow and refreshed on every subsequent run. Every other section in the task — `## Scope`, `## Notes`, custom sections — belongs to the human or the command that created the task; `check` does not touch them.
 
-## CLAUDE.md integration
+## AGENTS.md integration
 
-After `init`, the project's CLAUDE.md gets a usage block telling future Claude when to read flow files, when to call `done`/`validated`/`check`, and to flag changes that would violate ACs. The exact snippet and placement rules are in `init.md` Step 9. The update is always preview-then-confirm.
+After `init`, the project's AGENTS.md gets a usage block telling future Codex when to read flow files, when to call `done`/`validated`/`check`, and to flag changes that would violate ACs. The exact snippet and placement rules are in `init.md` Step 9. The update is always preview-then-confirm.
 
 ## Anti-patterns — stop yourself if you catch yourself doing these
 

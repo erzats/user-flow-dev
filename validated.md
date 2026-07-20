@@ -2,7 +2,7 @@
 
 Archive a task after the user has manually validated it. Run this only after `/user-flow-dev done` has staged the task as `needs manual validation` and the user has actually exercised the flow.
 
-**Scope:** writes inside `.claude/user-flows/` only.
+**Scope:** writes inside the resolved `FLOW_ROOT` only.
 
 ## When this runs
 

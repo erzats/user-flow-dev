@@ -1,6 +1,6 @@
 # user-flow-dev
 
-A Claude Code skill that maintains a living registry of **user flows** — behavioral descriptions of how a product should work — under `.claude/user-flows/` in your project. Designed for long Claude Code sessions where context drifts and old flows quietly break.
+A user-flow skill that maintains a living registry of **user flows** — behavioral descriptions of how a product should work — at the repository's declared canonical path. Designed for long agent sessions where context drifts and old flows quietly break.
 
 Deliberately **not** called "user stories" — these are behavioral specs with branches and acceptance criteria, not backlog items.
 
@@ -58,7 +58,7 @@ cd ~/.claude/skills/user-flow-dev && git pull
 ## File structure produced
 
 ```
-.claude/user-flows/
+<resolved-flow-root>/
   overview.md          ← one-line-per-flow index
   domains/
     <domain>.md        ← per-domain summary, flow index, full flow detail
@@ -68,12 +68,12 @@ cd ~/.claude/skills/user-flow-dev && git pull
     <domain>/          ← active task files
 ```
 
-After init, the skill offers to add a small instruction block to your project's CLAUDE.md so future Claude sessions read `overview.md` on session start, call `/user-flow-dev done <TASK-ID>` when finishing implementation work (which stages the task as `needs manual validation`), and leave `/user-flow-dev validated <TASK-ID>` to the user once they've manually confirmed the flow works.
+Before every command, the skill resolves the registry root from repository instructions (such as `AGENTS.md`), then uses that root consistently. After init, it offers to add a small instruction block to the repository's primary instructions file so future sessions read `overview.md` on session start, call `/user-flow-dev done <TASK-ID>` when finishing implementation work (which stages the task as `needs manual validation`), and leave `/user-flow-dev validated <TASK-ID>` to the user once they've manually confirmed the flow works.
 
 ## Design constraints
 
 - **Token efficiency.** Indices are dense pipe-delimited lines (`UF-AUTH-001 | Sign in with SSO | auth | tags: sso, session`). An agent reads `overview.md` first to decide which domain file to load.
-- **Scope safety.** All file writes are confined to `.claude/user-flows/`. The CLAUDE.md update during `init` is preview-then-confirm, never silent.
+- **Scope safety.** All registry writes are confined to the resolved flow root. The repository-instructions update during `init` is preview-then-confirm, never silent.
 - **No content redundancy.** The index line is duplicated (overview + domain index) for scannability; the content (branches, AC) lives in exactly one place.
 - **Behavioral, not implementation.** Flow detail describes what the user experiences — not tables, RLS, endpoints, or library calls.
 

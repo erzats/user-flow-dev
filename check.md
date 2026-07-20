@@ -24,12 +24,12 @@ Skip flows whose status is `deferred` or `superseded by ...`. Those encode produ
 ### Step 1 — Load the target flows
 
 If a domain was specified:
-- Read `.claude/user-flows/domains/<domain>.md` only.
+- Read `FLOW_ROOT/domains/<domain>.md` only.
 - If the domain file doesn't exist, list available domains from `overview.md` and stop.
 
 If no domain was specified:
 - Read `overview.md` to enumerate domains.
-- Then read each `.claude/user-flows/domains/*.md` in turn.
+- Then read each `FLOW_ROOT/domains/*.md` in turn.
 - Warn the user: "Checking N flows across M domains; this will take a while."
 
 For each flow, extract:

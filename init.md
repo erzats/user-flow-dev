@@ -1,10 +1,10 @@
 # `/user-flow-dev init`
 
-First-time setup for a project. Infers domains, proposes flows, gets user confirmation, writes files inside `.claude/user-flows/`, and previews a CLAUDE.md addition.
+First-time setup for a project with no existing user-flow registry. Infers domains, proposes flows, gets user confirmation, writes files inside `FLOW_ROOT`, and previews a repository-instructions addition.
 
 **Two-phase: propose, then write.** Never write files in the first response.
 
-**Scope:** all file writes during init are inside `.claude/user-flows/` except the CLAUDE.md update, which is always preview-then-confirm. Do not modify or migrate any other files.
+**Scope:** resolve `FLOW_ROOT` using `SKILL.md` before starting. All registry writes during init are inside that root; the repository-instructions update is always preview-then-confirm. Do not modify or migrate any other files.
 
 ## Phase 1 — Propose (no file writes yet)
 
@@ -13,7 +13,7 @@ First-time setup for a project. Infers domains, proposes flows, gets user confir
 Read these without asking the user:
 
 - `README.md`, `README`, `docs/README*` — describes what the product does
-- `CLAUDE.md` (root and any nested) — describes architecture and conventions
+- `AGENTS.md`, `CLAUDE.md`, and equivalent root instructions — describe architecture, conventions, and any canonical registry path
 - `package.json` (and any monorepo `apps/*/package.json`) — names of apps
 - Top-level folder structure: `apps/`, `packages/`, `services/`, `src/`
 - `docs/` — any existing flow-like content
@@ -80,14 +80,14 @@ Confirm, edit, or merge before I write files. Suggestions:
 Use Write to create:
 
 ```
-.claude/user-flows/overview.md
-.claude/user-flows/domains/<each-domain>.md
-.claude/user-flows/tasks/todo.md
+FLOW_ROOT/overview.md
+FLOW_ROOT/domains/<each-domain>.md
+FLOW_ROOT/tasks/todo.md
 ```
 
 The `tasks/<domain>/` and `tasks/archive/` subfolders are created lazily — the first task creation makes its domain folder.
 
-All writes are confined to `.claude/user-flows/`. Do not touch anything else in this step.
+All registry writes are confined to `FLOW_ROOT`. Do not touch anything else in this step.
 
 ### Step 6: Write `overview.md`
 
@@ -140,53 +140,54 @@ Format: `TASK-NNN | <summary> | <domain> | <FLOW-ID> | <status>`
 (no tasks yet)
 ```
 
-### Step 9: Update CLAUDE.md (preview, then confirm)
+### Step 9: Update repository instructions (preview, then confirm)
 
-Read the project's `CLAUDE.md`. Show the user this snippet and **ask before adding it** — never silent:
+Use the repository's primary instructions file (`AGENTS.md` when present; otherwise `CLAUDE.md`). Show the user this snippet with `FLOW_ROOT` expanded to its resolved path and **ask before adding it** — never silent:
 
 ```markdown
 ## User flows
 
-This project documents intended product behavior under `.claude/user-flows/`. Treat it as canonical for "how this is supposed to work".
+This project documents intended product behavior under `FLOW_ROOT`. Treat it as canonical for "how this is supposed to work".
 
-- **Session start:** read `.claude/user-flows/overview.md`. It is short and pipe-delimited; load it always.
-- **Before touching code in a domain:** read `.claude/user-flows/domains/<domain>.md`. The two-sentence summary plus the index tells you which flows you might affect. If a flow you're about to touch carries an `Active task:` line, read that task file too — it has the latest findings or in-flight scope.
+- **Session start:** read `FLOW_ROOT/overview.md`. It is short and pipe-delimited; load it always.
+- **Before touching code in a domain:** read `FLOW_ROOT/domains/<domain>.md`. The two-sentence summary plus the index tells you which flows you might affect. If a flow you're about to touch carries an `Active task:` line, read that task file too — it has the latest findings or in-flight scope.
 - **Before making a change that would alter behavior:** check the affected flows' acceptance criteria. If a change would break one, surface it to the user before making the change.
 - **When the user reports a bug, regression, or a "should work like X" expectation:** propose `/user-flow-dev report` so the registry stays in sync. The skill will classify (existing flow vs. new flow), ask clarifying questions, edit AC or create the flow, and generate a task. Don't run it autonomously — surface it and let the user agree.
 - **Finishing implementation on a task:** when you complete implementation work tied to a `TASK-NNN`, call `/user-flow-dev done TASK-NNN`. This stages the task as `needs manual validation` and flips the linked flow's status to match — it does **not** archive. The task file gets a manual-validation checklist for the user.
 - **After the user manually validates:** the user runs `/user-flow-dev validated TASK-NNN` (or asks you to). That archives the task and flips the flow to `completed`. Do not run `validated` autonomously unless the user has explicitly said the validation passed.
 - **After meaningful changes in a domain:** run `/user-flow-dev check <domain>` so flow status and tasks stay reconciled with the code. `check` updates statuses, refreshes the `## Findings` section of the relevant task (or creates one if needed), and archives tasks whose flow now passes.
+- **Approved behavior change:** when a user deliberately improves an existing flow, run `/user-flow-dev decision <description>` so the decision updates the flow without being treated as a defect.
 - **New behavior:** when adding meaningful new behavior, run `/user-flow-dev add <description>` so the flow gets documented before or alongside the change.
 ```
 
-If the user accepts, insert the snippet as a top-level `## User flows` section near other architectural notes (after any "Architecture" section, before "Task Completion Policy" or similar). If CLAUDE.md doesn't exist, ask the user whether to create one with just this section.
+If the user accepts, insert the snippet as a top-level `## User flows` section near other architectural notes (after any "Architecture" section, before "Task Completion Policy" or similar). If neither instructions file exists, ask the user whether to create one with just this section.
 
-If the user declines, do not write to CLAUDE.md and note the decline in the final summary.
+If the user declines, do not write to the instructions file and note the decline in the final summary.
 
-### Step 10: Propose `.claude/settings.json` permission rules (preview, then confirm)
+### Step 10: Propose permission rules only when the active environment supports them
 
-`check` and `done` can fire many edits inside `.claude/user-flows/` in one run. Without an allowlist, each edit triggers an approval prompt. Offer to add allow rules to the project's `.claude/settings.json`:
+`check` and `done` can fire many edits inside `FLOW_ROOT`. If the active environment documents a project-local permission configuration, offer a preview using the resolved root. Otherwise skip this step; do not create a Claude-specific settings file in another agent environment.
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Edit(.claude/user-flows/**)",
-      "Write(.claude/user-flows/**)"
+      "Edit(FLOW_ROOT/**)",
+      "Write(FLOW_ROOT/**)"
     ]
   }
 }
 ```
 
-Show the user the addition (merging into any existing `permissions.allow` array if one is present, creating the file otherwise) and ask before writing. If they decline, note it and move on. The skill works fine without it; the rules just remove an interruption.
+Show the user the addition (with `FLOW_ROOT` expanded, merging into an existing allowlist if appropriate) and ask before writing. If no compatible configuration exists, record it as skipped.
 
 ### Step 11: Confirm
 
 Print a one-paragraph summary including:
 - Number of domains and total flows created
-- The exact list of file paths written under `.claude/user-flows/`
-- Whether CLAUDE.md was updated, declined, or skipped
-- Whether the `.claude/settings.json` permission rules were added, declined, or skipped
+- The exact list of file paths written under `FLOW_ROOT`
+- Whether repository instructions were updated, declined, or skipped
+- Whether compatible permission rules were added, declined, or skipped
 - Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones — this is normal, not a sign the system is empty
 - Suggested next step: `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
 

@@ -6,7 +6,7 @@ Mark a task's implementation complete and stage it for manual validation. **Expe
 
 The escape hatch (`--skip-validation`) exists for the rare task where Claude can articulate, in one sentence, why no user-observable behavior could possibly change. Use it almost never.
 
-**Scope:** writes inside `.claude/user-flows/` only.
+**Scope:** writes inside the resolved `FLOW_ROOT` only.
 
 ## When Claude should call this autonomously
 

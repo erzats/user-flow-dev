@@ -2,7 +2,7 @@
 
 Generate a manual task file for **one** specific flow. **Never bulk-generates.**
 
-**Scope:** all writes inside `.claude/user-flows/`.
+**Scope:** all writes inside the resolved `FLOW_ROOT`.
 
 > **One task per flow.** If a task already exists for the flow (open or check-generated), stop and surface it instead of creating a duplicate. `/user-flow-dev check` may also create tasks autonomously when it discovers issues — those are the same kind of file as what this command produces, just with `**Source:** check` in the header. See `check.md` for that lifecycle.
 
@@ -41,7 +41,7 @@ The task lives in `tasks/<domain>/`, where `<domain>` matches the flow's domain.
 
 ### Step 5 — Write the task file
 
-Path: `.claude/user-flows/tasks/<domain>/TASK-NNN.md`
+Path: `FLOW_ROOT/tasks/<domain>/TASK-NNN.md`
 
 Shape:
 
@@ -97,7 +97,7 @@ This is the same line that `/user-flow-dev check` writes when it creates a task.
 Print:
 
 ```
-Created TASK-NNN at .claude/user-flows/tasks/<domain>/TASK-NNN.md
+Created TASK-NNN at FLOW_ROOT/tasks/<domain>/TASK-NNN.md
 Linked to UF-<DOMAIN>-NNN (Active task: line added to flow detail).
 Marked pending in todo.md.
 ```
