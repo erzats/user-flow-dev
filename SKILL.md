@@ -1,142 +1,113 @@
 ---
 name: user-flow-dev
-description: Use when the user types /user-flow-dev (any subcommand); a project has a documented user-flow registry; work touches a documented behavior; a UF-* flow ID appears; or a user reports a behavioral issue or approves a product-decision change to a documented flow.
+description: Use when a repository has a user-flow registry, a UF-* flow ID appears, work changes a critical user journey, or a user reports or approves a behavioral change that should survive across issues and agent sessions.
 ---
 
-# user-flow-dev
+# User-flow-centered development
 
-A registry of **user flows** — behavioral descriptions of how the product should work — is consulted before, during, and after work. Flows survive session resets so new requirements do not quietly break old behavior. See `README.md` for the rationale.
+Maintain a small registry of durable behavioral contracts. User flows define what users must experience; the repository's issue tracker and project board own implementation scope, dependencies, status, and history.
 
-## Registry root (resolve before every subcommand)
+## Resolve the registry
 
-Set `FLOW_ROOT` to the project's existing canonical registry before reading or writing anything:
+Before every command:
 
-1. If repository instructions (such as `AGENTS.md` or `CLAUDE.md`) explicitly name a user-flow path, use that path.
-2. Otherwise, use the one existing registry among `docs/user-flows/`, `.Codex/user-flows/`, or `.claude/user-flows/`.
-3. If more than one exists and instructions do not resolve the conflict, stop and ask the user; never merge or migrate them.
-4. If none exists, `init` creates `.Codex/user-flows/`; every other subcommand tells the user to run `init` first.
+1. Use the user-flow path declared by repository instructions.
+2. Otherwise use the one existing registry among `docs/user-flows/`, `.Codex/user-flows/`, and `.claude/user-flows/`.
+3. If more than one exists, stop and ask which is canonical.
+4. If none exists, only `init` may create one, at `docs/user-flows/`.
 
-All references to `FLOW_ROOT` below mean the resolved path. Do not create a second registry merely because a different conventional path is absent.
+Call the resolved path `FLOW_ROOT`.
 
-## Routing
+## Commands
 
-The first word of `$ARGUMENTS` selects the subcommand. Read the matching reference file in full before doing anything.
+Read the matching file in full before acting.
 
-| Subcommand | Reference file | What it does |
+| Command | Reference | Purpose |
 |---|---|---|
-| `init` | `init.md` | First-time scan: infer domains, propose flows, write files. |
-| `add` | `add.md` | **Conversational.** Add one flow. Never one-shot. |
-| `pending [status]` | `pending.md` | List flows that need attention; optional status slug narrows to one status. Read-only. |
-| `task <FLOW-ID>` | `task.md` | Generate a single task file for one flow. |
-| `report <description>` | `report.md` | **Conversational.** Route a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
-| `decision <description>` | `decision.md` | **Conversational.** Record an approved product decision that changes an existing flow without classifying it as a defect. |
-| `check [domain]` | `check.md` | Verify acceptance criteria still hold against current code. |
-| `done <TASK-ID>` | `done.md` | Stage a task as `needs manual validation` after implementation. Does not archive. |
-| `validated <TASK-ID>` | `validated.md` | Archive a task after the user has manually validated it. |
-| (none / unknown) | — | Print this table and stop. |
+| `init` | `init.md` | Propose and create the first critical flows. |
+| `add <description>` | `add.md` | Add one durable behavioral contract. |
+| `report <description>` | `report.md` | Reconcile reported behavior with an existing or new flow. |
+| `decision <description>` | `decision.md` | Record an approved change to intended behavior. |
+| `check [domain or FLOW-ID]` | `check.md` | Verify flow acceptance criteria against code and tests without writing work-tracking state. |
 
-The canonical shape of a single flow's detail section is in `flow-template.md`. `init` and `add` both reference it.
+Unknown commands print this table and stop.
 
-## Four invariants — read before any subcommand
+## Registry shape
 
-These hold across every subcommand. The reference files assume you know them.
-
-### 1. File structure (fixed inside `FLOW_ROOT` — do not propose alternatives)
-
-```
+```text
 FLOW_ROOT/
-  overview.md          ← one-line-per-flow index, domain list, nothing else
-  domains/
-    <domain>.md        ← 2-sentence domain summary + flow index + flow detail
-  tasks/
-    todo.md            ← one-line-per-task index with status
-    archive/           ← completed task files (never deleted)
-    <domain>/          ← TASK-NNN.md files for in-progress tasks
+  overview.md
+  flows/
+    UF-<DOMAIN>-NNN.md
 ```
 
-If a required registry file is missing, create it only inside `FLOW_ROOT` when the active subcommand permits creation.
+`overview.md` contains only domain links and one dense line per flow:
 
-Hard scope rules:
-- Do not migrate, modify, or delete files outside `FLOW_ROOT`.
-- `FLOW_ROOT` may be under `docs/` when repository instructions declare it canonical; edits there are registry edits, not unrelated documentation rewrites.
-- The one exception is the AGENTS.md update during `init`, which is always preview-then-confirm — never silent.
-- When you create files inside `FLOW_ROOT`, list every file path you wrote in your final confirmation message.
-
-Do not ask the user where flows should live when the repository resolves it. Ask only when multiple registries exist without an explicit canonical path.
-
-### 2. Behavioral, not implementation
-
-A flow describes what the user experiences and what branches exist. It does not describe tables, RLS, endpoints, SDK methods, or component names. Acceptance criteria are observable from outside the system — "subscription state converges within 5 minutes" not "webhook handler updates the row".
-
-### 3. Indices are dense — pipe-delimited, one line per flow
-
-`overview.md` and the index section at the top of each domain file use this exact format:
-
-```
-UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>, <tag>
+```text
+UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>
 ```
 
-`todo.md` uses the same shape for tasks:
+Each flow has one file and follows `flow-template.md`. IDs are append-only and filenames never change. Superseded flows remain in the index and point to their replacement.
 
-```
-TASK-NNN | <one-line summary> | <domain> | <FLOW-ID> | <status>
-```
+## What deserves a flow
 
-If you find yourself writing a paragraph in any index, stop and rewrite as one line. Em-dashes, narrative, branch counts — none of that goes in the index. Detail lives in the per-flow section of the domain file.
+Document behavior only when it is important enough that a future agent must reconstruct it before changing code. A candidate normally has at least two of these properties:
 
-### 4. No content redundancy across files
+- crosses multiple screens, services, roles, or asynchronous steps;
+- carries privacy, authorization, safety, financial, or data-loss risk;
+- has meaningful branches or failure recovery;
+- encodes a long-lived product decision likely to outlive one issue;
+- would cause a costly regression if an agent inferred the behavior from code alone.
 
-- `overview.md` lists flows but never describes them. The index *line* is duplicated between `overview.md` and the domain's index section; the *content* (branches, AC, preconditions) is not.
-- Task files reference `UF-...` IDs. They never restate flow content.
+Keep ordinary CRUD, isolated UI details, refactors, and technical acceptance criteria in the issue tracker. `init` proposes 4–8 critical flows total, not an exhaustive product catalog.
 
-## Domain inference (always automatic)
+## Source-of-truth boundaries
 
-Domain names are inferred from the codebase, never asked. See `init.md` for the inference procedure. New flows added later go through the same inference (see `add.md`). Generic domains (`auth`, `payments`, `onboarding`, `notifications`) are normal; application-specific domains (`hunt-builder`, `admin-dashboard`, `mobile-reader`) are encouraged when they earn their keep.
+| Concern | Canonical owner |
+|---|---|
+| Intended user behavior, branches, observable acceptance criteria | Flow file |
+| Implementation scope and technical acceptance criteria | Issue |
+| Priority, dependencies, assignment, and delivery status | Issue tracker / project board |
+| Review, validation evidence, and merge state | Pull request |
+| Historical flow contract | Flow file at the pinned Git commit |
 
-**Default rule: a domain needs at least 3 flows.** Prefer merging domains with fewer than 3 flows into the closest neighbor.
+Never create local task files, task indices, archives, or implementation statuses inside `FLOW_ROOT`.
 
-**Exception:** keep a small domain when it has *distinct actors, distinct lifecycle, or distinct risk profile* from its neighbors. Two payment-fraud flows are not a thin domain — they are a real one with elevated risk; keep them separate even if there are only two. Two profile-edit flows that overlap with a `settings` domain are a thin domain; merge them.
+## Issue and pull-request integration
 
-When in doubt, prefer the hard rule (merge). It is easier to split a fat domain later than to chase down flows scattered across thin ones.
+Flow-to-work relationships are many-to-many. Store them in issues and pull requests, never as mutable issue links inside flow files.
 
-## Flow IDs
+Before implementation of work that affects a documented flow:
 
-`UF-<DOMAIN>-NNN` where `<DOMAIN>` is the uppercased domain name (or short prefix for long names — `PAYMENTS` not `BILLING-AND-SUBSCRIPTIONS`). Numbers start at 001, append-only. Never renumber. If a flow is superseded, mark its detail section `Status: superseded by UF-X-NNN`; do not delete or renumber.
+1. Read the current flow file.
+2. Confirm the issue covers the intended behavior and repository dependency rules.
+3. Pin the exact contract in the issue body under `## User-flow contracts`:
 
-## Status lifecycle
+   ```markdown
+   ## User-flow contracts
+   - `UF-ACCESS-006` — [`<short-sha>`](https://github.com/OWNER/REPO/blob/FULL_SHA/docs/user-flows/flows/UF-ACCESS-006.md)
+   ```
 
-Every flow has a `Status:` field. `pending` and `check` use it to decide what to surface.
+4. If the flow is new or changed for this work, approve and commit the flow before implementation code, then pin that commit.
+5. If the pinned file differs from the current file when work resumes, review the flow diff before coding. Re-scope or split the issue when behavior changed; update the pin only after that reconciliation.
+6. Reference the same pinned contracts in the pull request and report acceptance-criterion evidence there.
 
-| Status | Set by | Surfaces in `pending`? | Meaning |
-|---|---|---|---|
-| `init` | `init` | No | Inferred from existing code; not yet evaluated by `check`. |
-| `not started` | `add`, human | Yes | Intended behavior; implementation hasn't begun. |
-| `incomplete` | `check` | Yes | Some ACs verified, some not implemented. |
-| `issues` | `check` | Yes | At least one AC `✗ broken`. |
-| `needs manual validation` | `check`, `done` | Yes | At least one AC `⚠ unclear` (and none broken), or implementation just landed and awaits human verification. |
-| `completed` | `check`, `validated` | No | All ACs verified holding. |
-| `deferred` | human only | No | Future behavior, not currently planned. `check` will not overwrite. |
-| `superseded by UF-X-NNN` | human only | No | Replaced by another flow. `check` will not overwrite. |
+Use the repository's configured tracker integration and lifecycle guidance for issue reads and writes. This skill never creates a parallel backlog or mirrors tracker status.
 
-The verdict precedence `check` uses to compute these statuses (broken > unclear > incomplete > completed) is in `check.md` Step 4. Don't restate it elsewhere.
+## Invariants
 
-## Tasks and findings
+- Describe behavior from the actor's perspective, not tables, endpoints, libraries, or components.
+- Keep acceptance criteria observable and testable.
+- Ask a clarification round before creating or materially changing a flow.
+- Keep one behavioral source: issues may reference flow criteria but must not copy them.
+- Let Git history version contracts; do not maintain a separate revision counter.
+- `check` is evidence-based and read-only. It may recommend tracker work but never creates it silently.
 
-There is at most one open task per flow. Tasks live in `tasks/<domain>/TASK-NNN.md` and use a global TASK-NNN sequence. The header field `**Source:** manual` or `**Source:** check` records who created the task.
+## Common mistakes
 
-When a task exists for a flow, the flow's detail section in the domain file carries an `Active task: tasks/<domain>/TASK-NNN.md` line directly under `Status:`. This is added by `task` or `check` when the task is created and removed by `done` or `check` when the task is archived — keeping each flow's detail honest about whether work is actively tracked.
-
-Inside any task, the `## Findings` section is owned by `check`. It is added on the first check run that surfaces issues for the linked flow and refreshed on every subsequent run. Every other section in the task — `## Scope`, `## Notes`, custom sections — belongs to the human or the command that created the task; `check` does not touch them.
-
-## AGENTS.md integration
-
-After `init`, the project's AGENTS.md gets a usage block telling future Codex when to read flow files, when to call `done`/`validated`/`check`, and to flag changes that would violate ACs. The exact snippet and placement rules are in `init.md` Step 9. The update is always preview-then-confirm.
-
-## Anti-patterns — stop yourself if you catch yourself doing these
-
-(File-scope and "infer domains" rules are covered in the Four invariants above; this list is for skill-wide behaviors not already pinned there.)
-
-- Adding a flow without a clarification round. See `add.md`.
-- Generating tasks in bulk. `task` operates on one flow at a time.
-- Marking a flow's acceptance criteria as verified without actually checking them against code or tests. See `check.md`.
-- Deleting completed task files. They go to `tasks/archive/`.
+- Cataloging every screen during `init`.
+- Adding task status, issue URLs, or implementation notes to a flow.
+- Copying flow acceptance criteria into an issue.
+- Linking an issue only to a mutable branch or current file instead of a commit permalink.
+- Treating a changed flow as though an older issue still has the same scope.
+- Claiming an acceptance criterion holds without a code or test citation.

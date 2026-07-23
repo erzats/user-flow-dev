@@ -1,204 +1,92 @@
 # `/user-flow-dev init`
 
-First-time setup for a project with no existing user-flow registry. Infers domains, proposes flows, gets user confirmation, writes files inside `FLOW_ROOT`, and previews a repository-instructions addition.
+Create the first small set of critical behavioral contracts. This command is propose-first: never write files before the user confirms the candidate flows.
 
-**Two-phase: propose, then write.** Never write files in the first response.
+## Phase 1: propose
 
-**Scope:** resolve `FLOW_ROOT` using `SKILL.md` before starting. All registry writes during init are inside that root; the repository-instructions update is always preview-then-confirm. Do not modify or migrate any other files.
+### 1. Gather signal
 
-## Phase 1 — Propose (no file writes yet)
+Read repository instructions, README and product docs, application routes, schema/domain names, tests, recent commits, and—when connected—the issue backlog and project hierarchy. Backlog items are product signal, not flow records.
 
-### Step 1: Gather signal
+### 2. Select critical journeys
 
-Read these without asking the user:
+Apply the qualification test in `SKILL.md`. Prefer cross-cutting authorization, privacy, money, destructive actions, multi-role behavior, asynchronous recovery, and other journeys where code alone is an unsafe source of intent.
 
-- `README.md`, `README`, `docs/README*` — describes what the product does
-- `AGENTS.md`, `CLAUDE.md`, and equivalent root instructions — describe architecture, conventions, and any canonical registry path
-- `package.json` (and any monorepo `apps/*/package.json`) — names of apps
-- Top-level folder structure: `apps/`, `packages/`, `services/`, `src/`
-- `docs/` — any existing flow-like content
-- `supabase/migrations/` or equivalent — table names hint at domains
+Propose **4–8 flows total** for the first registry. Do not inventory every screen, CRUD action, or planned feature. Thin domains are acceptable; grouping must not manufacture extra flows.
 
-Also accept any project description from `$ARGUMENTS` after the word `init`. Treat it as additional signal, not a replacement for the codebase scan.
+Assign append-only IDs `UF-<DOMAIN>-NNN`, starting at `001` per domain.
 
-### Step 2: Infer domains
+### 3. Present for confirmation
 
-Domains come from three sources, in order of preference:
+Use this format:
 
-1. **App-level structure** — `apps/web-admin/` → likely `admin-dashboard` domain. `apps/mobile-reader/` → `mobile-reader`. Names should match folders where reasonable.
-2. **Generic UX boundaries** — `auth`, `payments`, `onboarding`, `notifications`, `search`, `settings`. Add only if the README or migrations clearly indicate the area exists.
-3. **Application-specific concepts** — pulled from product nouns in the README. "scavenger hunt builder" → `hunt-builder`. "discussion threads" → `discussions`.
+```text
+Proposed critical user flows:
 
-Rules:
-- Lowercase, hyphenated. `admin-dashboard`, not `AdminDashboard` or `admin_dashboard`.
-- Default minimum: 3 flows per domain. If a candidate domain has 1–2 flows, fold them into the nearest neighbor.
-- Exception: keep a small domain when it has distinct actors, distinct lifecycle, or distinct risk profile. (See SKILL.md "Domain inference" for the trade-off.)
-- Aim for 4–8 domains for a typical small/medium project. More than 10 is usually over-segmented.
+access/
+  UF-ACCESS-001 | Approved person enters a parish | access | tags: admission, authentication
 
-### Step 3: Generate candidate flows
+privacy/
+  UF-PRIVACY-001 | Private space remains undiscoverable | privacy | tags: non-disclosure, authorization
 
-For each domain, list 4–10 candidate flows. Each candidate needs:
+N flows across M domains.
 
-- Stable ID `UF-<DOMAIN>-NNN`
-- Behavioral title (active voice, present tense, actor-first when applicable)
-- 2–5 tags (prefer 2–3 sharp ones over 5 fuzzy ones — see `flow-template.md` for the canonical rule)
-- Mental note of branches you'd cover, but don't write them yet
-
-Capture branching at this stage by listing it in a comment, not the title. The flow `UF-PAYMENTS-002 — Subscribe via Stripe Checkout` should mentally include "card declined", "user abandons checkout", "webhook arrives late" — they become branch entries in Phase 2.
-
-### Step 4: Present for confirmation
-
-Output the proposal as:
-
-```
-Proposed domains and flows:
-
-auth/
-  UF-AUTH-001 | Sign in with SSO | auth | tags: sso, session, oauth
-  UF-AUTH-002 | First-time account provisioning | auth | tags: signup, sso
-  ...
-
-payments/
-  UF-PAYMENTS-001 | Subscribe via Stripe Checkout | payments | tags: stripe, subscription, checkout
-  ...
-
-[N domains, M flows total]
-
-Confirm, edit, or merge before I write files. Suggestions:
-- Add: a flow I missed?
-- Drop: a flow that's not real?
-- Merge: any thin domains?
-- Rename: any domain or flow?
+These are behavioral contracts, not backlog items. Confirm, remove, merge, or rename before I write files.
 ```
 
-**Stop and wait for user response.** Do not write files.
+Stop and wait.
 
-## Phase 2 — Write (after user confirmation)
+## Phase 2: write after confirmation
 
-### Step 5: Create the directory tree
+### 4. Create the registry
 
-Use Write to create:
+If no canonical path is declared, create:
 
+```text
+docs/user-flows/
+  overview.md
+  flows/
+    UF-<DOMAIN>-NNN.md
 ```
-FLOW_ROOT/overview.md
-FLOW_ROOT/domains/<each-domain>.md
-FLOW_ROOT/tasks/todo.md
-```
 
-The `tasks/<domain>/` and `tasks/archive/` subfolders are created lazily — the first task creation makes its domain folder.
-
-All registry writes are confined to `FLOW_ROOT`. Do not touch anything else in this step.
-
-### Step 6: Write `overview.md`
-
-Exact format:
+Write `overview.md` as a compact index:
 
 ```markdown
-# User Flows — Overview
+# User flows
 
-Index of all documented flows. Scan here first; load the domain file only when you need detail. Format per line:
-
-`UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>`
-
-Conventions: IDs are append-only — never renumber. Superseded flows stay listed (status in domain file). New flows go at the bottom of their domain section.
-
-## Domains
-
-- [auth](domains/auth.md) — <one-clause summary>
-- [payments](domains/payments.md) — <one-clause summary>
-- ...
+Critical behavioral contracts that must be read before related implementation work. Work tracking belongs in the repository's issue tracker.
 
 ## Flows
 
-### auth
-UF-AUTH-001 | Sign in with SSO | auth | tags: sso, session, oauth
-UF-AUTH-002 | First-time account provisioning | auth | tags: signup, sso
-...
-
-### payments
-UF-PAYMENTS-001 | Subscribe via Stripe Checkout | payments | tags: stripe, subscription, checkout
-...
+### access
+UF-ACCESS-001 | Approved person enters a parish | access | tags: admission, authentication
 ```
 
-The domain summaries are the same one-clause summaries that lead the domain file (Step 7). Do not write paragraphs.
+Write one file per confirmed flow using `flow-template.md`. Infer branches and acceptance criteria from confirmed product decisions; do not invent policy. If a material branch remains unknown, ask before writing that flow.
 
-### Step 7: Write each domain file
+### 5. Preview repository instructions
 
-Each domain file leads with a 2-sentence summary, then the flow index (one pipe-delimited line per flow, same as `overview.md`), then full flow detail separated by `---`. Each flow detail starts with `## UF-<DOMAIN>-NNN — <Title>` (so an agent can grep-jump by ID) and follows `flow-template.md` exactly — read it before writing. Set `Status: init` for every flow.
-
-Do not invent sections that aren't in `flow-template.md`. The 2-sentence summary at the top is the same one-clause summary used in `overview.md`'s domains list.
-
-### Step 8: Write `tasks/todo.md`
-
-```markdown
-# Tasks
-
-One-line-per-task index. Full detail lives in `tasks/<domain>/TASK-NNN.md`. Done tasks move to `tasks/archive/`.
-
-Format: `TASK-NNN | <summary> | <domain> | <FLOW-ID> | <status>`
-
-(no tasks yet)
-```
-
-### Step 9: Update repository instructions (preview, then confirm)
-
-Use the repository's primary instructions file (`AGENTS.md` when present; otherwise `CLAUDE.md`). Show the user this snippet with `FLOW_ROOT` expanded to its resolved path and **ask before adding it** — never silent:
+When the repository has an instructions file, preview this adapted block and ask before inserting it:
 
 ```markdown
 ## User flows
 
-This project documents intended product behavior under `FLOW_ROOT`. Treat it as canonical for "how this is supposed to work".
+Critical behavioral contracts live in `docs/user-flows/`.
 
-- **Session start:** read `FLOW_ROOT/overview.md`. It is short and pipe-delimited; load it always.
-- **Before touching code in a domain:** read `FLOW_ROOT/domains/<domain>.md`. The two-sentence summary plus the index tells you which flows you might affect. If a flow you're about to touch carries an `Active task:` line, read that task file too — it has the latest findings or in-flight scope.
-- **Before making a change that would alter behavior:** check the affected flows' acceptance criteria. If a change would break one, surface it to the user before making the change.
-- **When the user reports a bug, regression, or a "should work like X" expectation:** propose `/user-flow-dev report` so the registry stays in sync. The skill will classify (existing flow vs. new flow), ask clarifying questions, edit AC or create the flow, and generate a task. Don't run it autonomously — surface it and let the user agree.
-- **Finishing implementation on a task:** when you complete implementation work tied to a `TASK-NNN`, call `/user-flow-dev done TASK-NNN`. This stages the task as `needs manual validation` and flips the linked flow's status to match — it does **not** archive. The task file gets a manual-validation checklist for the user.
-- **After the user manually validates:** the user runs `/user-flow-dev validated TASK-NNN` (or asks you to). That archives the task and flips the flow to `completed`. Do not run `validated` autonomously unless the user has explicitly said the validation passed.
-- **After meaningful changes in a domain:** run `/user-flow-dev check <domain>` so flow status and tasks stay reconciled with the code. `check` updates statuses, refreshes the `## Findings` section of the relevant task (or creates one if needed), and archives tasks whose flow now passes.
-- **Approved behavior change:** when a user deliberately improves an existing flow, run `/user-flow-dev decision <description>` so the decision updates the flow without being treated as a defect.
-- **New behavior:** when adding meaningful new behavior, run `/user-flow-dev add <description>` so the flow gets documented before or alongside the change.
+- Read `docs/user-flows/overview.md` at session start and the relevant `flows/UF-*.md` files before changing documented behavior.
+- Keep work tracking in the configured issue tracker and project board; never create a parallel task registry under `docs/user-flows/`.
+- Before implementation, pin each affected flow file at an exact Git commit in the issue's `## User-flow contracts` section.
+- If a pinned flow changed, review the diff and reconcile issue scope before coding.
+- Reference the same pinned contracts and acceptance-criterion evidence in the pull request.
+- Run `/user-flow-dev check <domain-or-ID>` after meaningful changes. It is read-only and evidence-based.
 ```
 
-If the user accepts, insert the snippet as a top-level `## User flows` section near other architectural notes (after any "Architecture" section, before "Task Completion Policy" or similar). If neither instructions file exists, ask the user whether to create one with just this section.
+### 6. Confirm
 
-If the user declines, do not write to the instructions file and note the decline in the final summary.
+List every created or modified path. State the number of flows, that no task/status files were created, whether repository instructions were updated, and the recommended next flow to check or implementation issue to link.
 
-### Step 10: Propose permission rules only when the active environment supports them
+## Guardrails
 
-`check` and `done` can fire many edits inside `FLOW_ROOT`. If the active environment documents a project-local permission configuration, offer a preview using the resolved root. Otherwise skip this step; do not create a Claude-specific settings file in another agent environment.
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Edit(FLOW_ROOT/**)",
-      "Write(FLOW_ROOT/**)"
-    ]
-  }
-}
-```
-
-Show the user the addition (with `FLOW_ROOT` expanded, merging into an existing allowlist if appropriate) and ask before writing. If no compatible configuration exists, record it as skipped.
-
-### Step 11: Confirm
-
-Print a one-paragraph summary including:
-- Number of domains and total flows created
-- The exact list of file paths written under `FLOW_ROOT`
-- Whether repository instructions were updated, declined, or skipped
-- Whether compatible permission rules were added, declined, or skipped
-- Note that all generated flows have `Status: init` (the sentinel for "inferred from code, not yet evaluated") so `pending` will be empty until `check` evaluates flows or `add` introduces new ones — this is normal, not a sign the system is empty
-- Suggested next step: `/user-flow-dev check [domain]` to evaluate ACs against current code (this is what flips flows out of `init` status into `completed` / `incomplete` / `issues` / `needs manual validation`), then `/user-flow-dev pending` to see what needs attention
-
-Listing every file path is non-negotiable — the user must be able to see what changed without diffing.
-
-## Anti-patterns specific to init
-
-(File-scope and "infer domains" rules live in SKILL.md's Four invariants — not restated here.)
-
-- Phase 1 writing files. Don't.
-- Generating fewer than 3 candidate flows for a domain unless that domain has distinct actors/lifecycle/risk that justify keeping it small.
-- Generating more than 12 flows for a domain. Split it.
-- Adding flows for behavior that the README and code clearly don't support. Better to stop at "main flows" and let the user add later than to fabricate.
-- Inventing template fields not in `flow-template.md`. The template is canonical.
+- Do not exceed eight initial flows without a second explicit confirmation.
+- Do not create `tasks/`, `todo.md`, archives, statuses, or issue mirrors.
+- Do not mark inferred behavior as verified; `check` provides fresh evidence later.
