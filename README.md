@@ -1,82 +1,47 @@
 # user-flow-dev
 
-A user-flow skill that maintains a living registry of **user flows** — behavioral descriptions of how a product should work — at the repository's declared canonical path. Designed for long agent sessions where context drifts and old flows quietly break.
+A skill for user-flow-centered development without creating a second backlog.
 
-Deliberately **not** called "user stories" — these are behavioral specs with branches and acceptance criteria, not backlog items.
+User flows are durable behavioral contracts for critical journeys. They describe actor-visible paths, branches, failures, and acceptance criteria that future agents must understand before changing behavior. GitHub Issues, Projects, or another configured tracker remain the sole owners of implementation scope, dependencies, priority, and status.
 
-## What it does
+## Commands
 
-- **Infers domains** from your codebase (auth, payments, plus app-specific ones like `hunt-builder`) — you never name them.
-- **Generates a dense, scannable index** so an agent can find relevant flows without reading every domain file.
-- **Forces a clarification round** before adding a flow, so branches and edges actually get captured.
-- **Verifies acceptance criteria against real code** with a strict no-vibes-based-verification rule.
-- **Tracks tasks per flow** with a two-phase close: `done` stages a task as `needs manual validation`, `validated` archives it once the user has actually exercised the flow.
-
-## Subcommands
-
-| Command | What it does |
+| Command | Purpose |
 |---|---|
-| `/user-flow-dev init` | Scan codebase, infer domains, propose flows, write files. |
-| `/user-flow-dev add <description>` | Conversational add of a single flow with required clarification round. |
-| `/user-flow-dev report <description>` | Conversational route of a user-reported issue to an existing flow (modify) or a new flow (create), then generate a task. |
-| `/user-flow-dev pending [status]` | List flows that need attention; optional status slug (e.g. `issues`, `needs-manual-validation`) narrows to one status. Read-only. |
-| `/user-flow-dev task <FLOW-ID>` | Generate a task file for one flow. |
-| `/user-flow-dev check [domain]` | Verify acceptance criteria still hold against current code; reconcile statuses and tasks. |
-| `/user-flow-dev done <TASK-ID>` | Stage a task as `needs manual validation` after implementation. Does not archive. |
-| `/user-flow-dev validated <TASK-ID>` | Archive a task after the user has manually validated it; flips the linked flow to `completed`. |
+| `/user-flow-dev init` | Propose and create 4–8 initial critical flows. |
+| `/user-flow-dev add <description>` | Add one critical flow after clarification and approval. |
+| `/user-flow-dev report <description>` | Reconcile reported behavior with a flow and external tracking. |
+| `/user-flow-dev decision <description>` | Record an approved behavioral change. |
+| `/user-flow-dev check [domain or FLOW-ID]` | Read-only verification against code and tests. |
 
-## Install (personal, all projects)
+## Registry
 
-Clone into your personal skills directory:
+By default, initialization creates:
+
+```text
+docs/user-flows/
+  overview.md
+  flows/
+    UF-<DOMAIN>-NNN.md
+```
+
+Each flow lives in one stable file. There are no task files, implementation statuses, todo lists, or archives.
+
+## Tracker integration
+
+Issues and pull requests reference flow IDs without copying behavioral acceptance criteria. Pull-request evidence uses stable keys such as `UF-ACCESS-006/AC2`. Before implementation, each affected flow is pinned to its exact Git commit:
+
+```markdown
+## User-flow contracts
+- `UF-ACCESS-006` — [`abc1234`](https://github.com/OWNER/REPO/blob/FULL_SHA/docs/user-flows/flows/UF-ACCESS-006.md)
+```
+
+If the current file differs from the pinned contract, work pauses for scope reconciliation. Git history preserves the old contract; the issue tracker preserves implementation history.
+
+## Install
 
 ```bash
-git clone https://github.com/erzats/user-flow-dev.git ~/.claude/skills/user-flow-dev
+git clone https://github.com/erzats/user-flow-dev.git ~/.agents/skills/user-flow-dev
 ```
 
-On Windows (PowerShell):
-
-```powershell
-git clone https://github.com/erzats/user-flow-dev.git $HOME\.claude\skills\user-flow-dev
-```
-
-The `/user-flow-dev` slash command appears the next time you start Claude Code.
-
-## Install (project-local, just this repo)
-
-```bash
-git clone https://github.com/erzats/user-flow-dev.git .claude/skills/user-flow-dev
-```
-
-Commit `.claude/skills/user-flow-dev/` if you want the team to share it; otherwise add it to `.gitignore`.
-
-## Update
-
-```bash
-cd ~/.claude/skills/user-flow-dev && git pull
-```
-
-## File structure produced
-
-```
-<resolved-flow-root>/
-  overview.md          ← one-line-per-flow index
-  domains/
-    <domain>.md        ← per-domain summary, flow index, full flow detail
-  tasks/
-    todo.md            ← one-line-per-task index
-    archive/           ← completed task files (kept, never deleted)
-    <domain>/          ← active task files
-```
-
-Before every command, the skill resolves the registry root from repository instructions (such as `AGENTS.md`), then uses that root consistently. After init, it offers to add a small instruction block to the repository's primary instructions file so future sessions read `overview.md` on session start, call `/user-flow-dev done <TASK-ID>` when finishing implementation work (which stages the task as `needs manual validation`), and leave `/user-flow-dev validated <TASK-ID>` to the user once they've manually confirmed the flow works.
-
-## Design constraints
-
-- **Token efficiency.** Indices are dense pipe-delimited lines (`UF-AUTH-001 | Sign in with SSO | auth | tags: sso, session`). An agent reads `overview.md` first to decide which domain file to load.
-- **Scope safety.** All registry writes are confined to the resolved flow root. The repository-instructions update during `init` is preview-then-confirm, never silent.
-- **No content redundancy.** The index line is duplicated (overview + domain index) for scannability; the content (branches, AC) lives in exactly one place.
-- **Behavioral, not implementation.** Flow detail describes what the user experiences — not tables, RLS, endpoints, or library calls.
-
-## License
-
-MIT
+Use another runtime-specific personal skills directory when required.
