@@ -29,7 +29,7 @@ Each flow lives in one stable file. There are no task files, implementation stat
 
 ## Tracker integration
 
-Issues and pull requests reference flow IDs without copying behavioral acceptance criteria. Before implementation, each affected flow is pinned to its exact Git commit:
+Issues and pull requests reference flow IDs without copying behavioral acceptance criteria. Pull-request evidence uses stable keys such as `UF-ACCESS-006/AC2`. Before implementation, each affected flow is pinned to its exact Git commit:
 
 ```markdown
 ## User-flow contracts

@@ -17,11 +17,11 @@ Verify acceptance criteria against current code and tests. This command is stric
    | Verdict | Requirement |
    |---|---|
    | `✓ holds` | Cite the specific file and line/function or test that enforces it. |
-   | `⚠ manual` | Implementation exists, but runtime or human validation is required. |
+   | `⚠ manual` | Cite the implementation location and explain why runtime or human validation is still required. |
    | `✗ broken` | Cite code or a failing test that contradicts it. |
    | `– not implemented` | No corresponding implementation exists after targeted search. |
 
-4. Never award `✓` from naming, comments, or apparent intent. If evidence cannot be traced promptly, use `⚠ manual`.
+4. Never award `✓` from naming, comments, or apparent intent. Use `⚠ manual` only after locating relevant implementation. If targeted search finds no implementation, use `– not implemented`.
 5. When tracker access exists, search open issues and pull requests for the flow ID. Report coverage, stale pinned-contract links, or missing tracking; do not create or edit tracker items silently.
 6. Print evidence per acceptance criterion and a summary by verdict.
 
@@ -30,7 +30,7 @@ Verify acceptance criteria against current code and tests. This command is stric
 ```text
 ## UF-ACCESS-006 — Approved person enters a parish
 - ✓ Approved email gains one membership — path/file.ts:42-70
-- ⚠ Cross-device email link — requires a runtime test
+- ⚠ Cross-device email link — callback exists at app/auth/callback/route.ts:10-26, but cross-device behavior requires a runtime test
 - ✗ No redundant acceptance step — app/onboarding/page.tsx:40 still renders Accept
 
 Related work:

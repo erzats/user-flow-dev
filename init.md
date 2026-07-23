@@ -36,9 +36,15 @@ These are behavioral contracts, not backlog items. Confirm, remove, merge, or re
 
 Stop and wait.
 
+### 4. Draft and approve the contracts
+
+After the user confirms the index, draft the complete contents of every proposed flow using `flow-template.md`. Ask about any material policy, branch, failure, or role distinction that cannot be inferred safely. Present the full contracts in manageable batches and obtain explicit approval for their main paths, branches, and acceptance criteria.
+
+Stop again. Do not write until the complete contracts are approved.
+
 ## Phase 2: write after confirmation
 
-### 4. Create the registry
+### 5. Create the registry
 
 If no canonical path is declared, create:
 
@@ -62,9 +68,9 @@ Critical behavioral contracts that must be read before related implementation wo
 UF-ACCESS-001 | Approved person enters a parish | access | tags: admission, authentication
 ```
 
-Write one file per confirmed flow using `flow-template.md`. Infer branches and acceptance criteria from confirmed product decisions; do not invent policy. If a material branch remains unknown, ask before writing that flow.
+Write one file per approved flow using the approved drafts from Phase 1. Do not add or reinterpret behavior while writing.
 
-### 5. Preview repository instructions
+### 6. Preview repository instructions
 
 When the repository has an instructions file, preview this adapted block and ask before inserting it:
 
@@ -77,16 +83,16 @@ Critical behavioral contracts live in `docs/user-flows/`.
 - Keep work tracking in the configured issue tracker and project board; never create a parallel task registry under `docs/user-flows/`.
 - Before implementation, pin each affected flow file at an exact Git commit in the issue's `## User-flow contracts` section.
 - If a pinned flow changed, review the diff and reconcile issue scope before coding.
-- Reference the same pinned contracts and acceptance-criterion evidence in the pull request.
+- Reference the same pinned contracts in the pull request and report evidence by keys such as `UF-ACCESS-006/AC2`, without copying criterion text.
 - Run `/user-flow-dev check <domain-or-ID>` after meaningful changes. It is read-only and evidence-based.
 ```
 
-### 6. Confirm
+### 7. Confirm
 
 List every created or modified path. State the number of flows, that no task/status files were created, whether repository instructions were updated, and the recommended next flow to check or implementation issue to link.
 
 ## Guardrails
 
-- Do not exceed eight initial flows without a second explicit confirmation.
+- Do not exceed eight initial flows. Add later contracts one at a time with `add` when real work demonstrates their value.
 - Do not create `tasks/`, `todo.md`, archives, statuses, or issue mirrors.
 - Do not mark inferred behavior as verified; `check` provides fresh evidence later.

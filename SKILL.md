@@ -41,7 +41,7 @@ FLOW_ROOT/
     UF-<DOMAIN>-NNN.md
 ```
 
-`overview.md` contains only domain links and one dense line per flow:
+`overview.md` contains only domain headings and one dense line per flow:
 
 ```text
 UF-<DOMAIN>-NNN | <Title> | <domain> | tags: <tag>, <tag>
@@ -90,7 +90,7 @@ Before implementation of work that affects a documented flow:
 
 4. If the flow is new or changed for this work, approve and commit the flow before implementation code, then pin that commit.
 5. If the pinned file differs from the current file when work resumes, review the flow diff before coding. Re-scope or split the issue when behavior changed; update the pin only after that reconciliation.
-6. Reference the same pinned contracts in the pull request and report acceptance-criterion evidence there.
+6. Reference the same pinned contracts in the pull request. Report evidence by contract key, such as `UF-ACCESS-006/AC2`, without copying the criterion text.
 
 Use the repository's configured tracker integration and lifecycle guidance for issue reads and writes. This skill never creates a parallel backlog or mirrors tracker status.
 
@@ -99,7 +99,7 @@ Use the repository's configured tracker integration and lifecycle guidance for i
 - Describe behavior from the actor's perspective, not tables, endpoints, libraries, or components.
 - Keep acceptance criteria observable and testable.
 - Ask a clarification round before creating or materially changing a flow.
-- Keep one behavioral source: issues may reference flow criteria but must not copy them.
+- Keep one behavioral source: issues and pull requests may reference flow criteria but must not copy them.
 - Let Git history version contracts; do not maintain a separate revision counter.
 - `check` is evidence-based and read-only. It may recommend tracker work but never creates it silently.
 
